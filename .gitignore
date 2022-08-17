@@ -1,0 +1,5 @@
+.env
+gcloud.key.json
+gin-bin
+static
+node_modules

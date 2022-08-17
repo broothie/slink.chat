@@ -1,0 +1,24 @@
+{
+  "name": "slink.chat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "broothie <adbooth8@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "scripts": "jq .scripts package.json",
+    "server": "go run cmd/server/main.go",
+    "server:watch": "gin -i -d cmd/server --notifications",
+    "bundle": "go run cmd/bundle/main.go --production",
+    "bundle:watch": "go run cmd/bundle/main.go --watch"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^1.8.4",
+    "axios": "^0.27.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^8.0.2",
+    "react-router-dom": "^6.3.0",
+    "redux": "^4.2.0",
+    "socket.io-client": "^4.5.1"
+  }
+}
