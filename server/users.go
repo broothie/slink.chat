@@ -8,8 +8,10 @@ import (
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
+	"google.golang.org/api/iterator"
 )
 
 type userParams struct {
@@ -24,6 +26,26 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		logger.Error("failed to decode body", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+		return
+	}
+
+	logger = logger.With(zap.String("screenname", params.Screenname))
+	snapshots := s.db.
+		Collection("users").
+		Where("screenname", "==", params.Screenname).
+		Documents(r.Context())
+	defer snapshots.Stop()
+
+	snapshot, err := snapshots.Next()
+	if err != nil && err != iterator.Done {
+		logger.Error("failed to look for users", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	if snapshot.Exists() {
+		logger.Info("screenname is taken")
+		s.render.JSON(w, http.StatusBadRequest, errorMap(errors.New("screenname is taken")))
 		return
 	}
 

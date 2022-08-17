@@ -10,8 +10,8 @@
     "server:watch": "gin -i -d cmd/server --notifications",
     "bundle": "go run cmd/bundle/main.go --production",
     "bundle:watch": "go run cmd/bundle/main.go --watch",
-    "css": "tailwindcss -c config/tailwind.config.js --postcss config/postcss.config.js -i www/css/style.css -o static/bundle.css --minify",
-    "css:watch": "tailwindcss -c config/tailwind.config.js --postcss config/postcss.config.js -i www/css/style.css -o static/bundle.css --minify --watch",
+    "css": "tailwindcss -c config/tailwind.config.js --postcss config/postcss.config.js -i www/css/style.css -o static/style.css --minify",
+    "css:watch": "tailwindcss -c config/tailwind.config.js --postcss config/postcss.config.js -i www/css/style.css -o static/style.css --minify --watch",
     "issues": "gh issue list",
     "issues:create": "gh issue create --body '' --title"
   },

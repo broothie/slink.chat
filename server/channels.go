@@ -77,7 +77,8 @@ func (s *Server) channelSubscribe(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer close(dbCloseChan)
 
-		snapshots := s.db.Collection("channels").
+		snapshots := s.db.
+			Collection("channels").
 			Doc(chi.URLParam(r, "channel_id")).
 			Collection("messages").
 			Where("created_at", ">", time.Now()).

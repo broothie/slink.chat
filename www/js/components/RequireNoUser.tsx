@@ -4,7 +4,7 @@ import {useAppDispatch, useAppSelector} from "../hooks";
 import {fetchCurrentUser} from "../store/userSlice";
 import {Navigate} from "react-router-dom";
 
-export default function RequireUser({children}) {
+export default function RequireNoUser({children}) {
 	const userState = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
 
@@ -20,8 +20,8 @@ export default function RequireUser({children}) {
 			return <div></div>
 
 		case "checked":
-			if (!userState.user) {
-				return <Navigate to="/signon" />
+			if (userState.user) {
+				return <Navigate to="/" />
 			} else {
 				return children
 			}

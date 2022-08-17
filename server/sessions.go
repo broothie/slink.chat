@@ -26,13 +26,16 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snapshot, err := s.db.Collection("users").
+	snapshots := s.db.
+		Collection("users").
 		Where("screenname", "==", params.Screenname).
-		Documents(r.Context()).
-		Next()
+		Documents(r.Context())
+	defer snapshots.Stop()
+
+	snapshot, err := snapshots.Next()
 	if err != nil {
 		if err == iterator.Done {
-			logger.Error("failed to decode body", zap.Error(err))
+			logger.Error("user not found", zap.Error(err))
 			s.render.JSON(w, http.StatusUnauthorized, errorMap(errors.New("invalid screenname/password combination")))
 			return
 		}

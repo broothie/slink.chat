@@ -1,7 +1,14 @@
 import * as React from "react";
+import {useAppDispatch} from "../hooks";
+import {createSession} from "../store/userSlice";
+import AuthWindow from "./AuthWindow";
 
 export default function SignOn() {
-	return (
-		<div>sign on</div>
-	)
+	const dispatch = useAppDispatch()
+
+	function signOn(screenname: string, password: string) {
+		dispatch(createSession({ screenname, password }))
+	}
+
+	return <AuthWindow title="Sign On" submit={signOn}/>
 }
