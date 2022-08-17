@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -40,11 +39,10 @@ func (s *Server) routes() chi.Router {
 					r.Route("/{channel_id}", func(r chi.Router) {
 						r.Use(injectResourceLog("channel"))
 
-						r.
-							With(middleware.Timeout(time.Hour)).
-							Get("/subscribe", s.channelSubscribe)
+						r.Get("/subscribe", s.channelSubscribe)
 
 						r.Route("/messages", func(r chi.Router) {
+							r.Get("/", s.indexMessages)
 							r.Post("/", s.createMessage)
 						})
 					})

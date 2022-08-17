@@ -33,7 +33,7 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 		Name:      params.Name,
 	}
 
-	if _, err := s.Collection("channels").Doc(channel.ID).Create(r.Context(), channel); err != nil {
+	if _, err := s.db.Collection("channels").Doc(channel.ID).Create(r.Context(), channel); err != nil {
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
 	}
@@ -77,7 +77,7 @@ func (s *Server) channelSubscribe(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer close(dbCloseChan)
 
-		snapshots := s.Collection("channels").
+		snapshots := s.db.Collection("channels").
 			Doc(chi.URLParam(r, "channel_id")).
 			Collection("messages").
 			Where("created_at", ">", time.Now()).

@@ -1,11 +1,10 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
-	"cloud.google.com/go/firestore"
 	"github.com/broothie/slink.chat/config"
+	"github.com/broothie/slink.chat/db"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 	"github.com/unrolled/render"
@@ -14,14 +13,14 @@ import (
 type Server struct {
 	cfg      *config.Config
 	sessions *sessions.CookieStore
-	db       *firestore.Client
+	db       *db.DB
 	render   *render.Render
 }
 
 func New(cfg *config.Config) (*Server, error) {
-	client, err := firestore.NewClient(context.Background(), cfg.ProjectID)
+	client, err := db.New(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new firestore client")
+		return nil, errors.Wrap(err, "failed to create new db")
 	}
 
 	return &Server{
@@ -40,8 +39,4 @@ func New(cfg *config.Config) (*Server, error) {
 
 func (s *Server) Handler() http.Handler {
 	return s.routes()
-}
-
-func (s *Server) Collection(name string) *firestore.CollectionRef {
-	return s.db.Collection(s.cfg.Collection(name))
 }
