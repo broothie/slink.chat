@@ -15,8 +15,10 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 	const [password, setPassword] = useState('')
 
 	return (
-		<div className="p-1 flex flex-col self-center mx-auto window">
-			<TitleBar title={title}/>
+		<div className="p-1 flex flex-col self-center mx-auto window draggable">
+			<div className="draggable-handle">
+				<TitleBar title={title}/>
+			</div>
 
 			<div className="px-2 py-1 font-sans">
 				<div className="bg-logo-tile flex flex-col items-center p-2">

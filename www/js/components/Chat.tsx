@@ -17,21 +17,8 @@ type ChannelResponse = {
 	users: UserLookup,
 }
 
-const offsets = [
-	{ top: 'top-10', left: 'left-10' },
-	{ top: 'top-11', left: 'left-11' },
-	{ top: 'top-12', left: 'left-12' },
-	{ top: 'top-14', left: 'left-14' },
-	{ top: 'top-16', left: 'left-16' },
-]
-
-export default function Chat({ channelID, offset, close }: {
-	channelID: string,
-	offset: number,
-	close: CloseFunction,
-}) {
+export default function Chat({ channelID, close }: { channelID: string, close: CloseFunction }) {
 	const user = useAppSelector(state => state.user.user)
-	const offsetValues = offsets[offset % offsets.length]
 	const windowRef = useRef()
 
 	const [message, setMessage] = useState('')
@@ -97,8 +84,10 @@ export default function Chat({ channelID, offset, close }: {
 	}, [])
 
 	return channel && (
-		<div className={`window p-1 flex flex-col w-fit absolute ${offsetValues.top} ${offsetValues.left}`}>
-			<TitleBar title={`${channel.name} - Instant Message`} close={close}/>
+		<div className="window p-1 flex flex-col w-fit">
+			<div className="draggable-handle">
+				<TitleBar title={`${channel.name} - Instant Message`} close={close}/>
+			</div>
 
 			<div className="hr my-1"></div>
 

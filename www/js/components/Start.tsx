@@ -1,52 +1,51 @@
 import * as React from "react";
 import ChannelList from "./ChannelList";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Chat from "./Chat";
-import {useAppSelector} from "../hooks";
 import * as _ from "lodash";
-import {Channel} from "../model/model";
 import CreateChannel from "./CreateChannel";
 
-// export type AddChannel = { (channelID: string) }
-
 export default function Start() {
-	const [isCreating, setIsCreating] = useState(false)
+	const [windowIDs, setWindowIDs] = useState([])
+	const [windows, setWindows] = useState({})
 
-	const channels = useAppSelector(state => state.channels)
-	const [openChannels, setOpenChannels] = useState([] as Channel[])
-
-	function addChannel(channelID: string) {
-		if (_.includes(openChannels, channels[channelID])) return
-
-		setOpenChannels(openChannels.concat([channels[channelID]]))
+	function addWindow(id: string, style: Object, element: React.ReactNode) {
+		setWindowIDs(windowIDs => _.uniq(windowIDs.concat([id])))
+		setWindows(windows => _.merge({}, windows, { [id]: { style, element } }))
 	}
 
-	function removeChannel(channelID: string) {
-		setOpenChannels(_.without(openChannels, _.find(openChannels, { channelID })))
+	function removeWindow(id: string) {
+		setWindowIDs(windowIDs => _.without(windowIDs, id))
+		setWindows(windows => {
+			const copy = _.merge({}, windows)
+			delete copy.id
+			return copy
+		})
 	}
 
-	function openCreateChannel() {
-		setIsCreating(true)
+	function activateWindow(id: string) {
+		setWindowIDs(windowIDs => _.sortBy(windowIDs, windowID => windowID === id))
 	}
+
+	useEffect(() => {
+		addWindow('ChannelList', { right: 50, top: 50 }, <ChannelList
+			addChannel={channelID => addWindow(channelID, { left: 50, top: 50 }, <Chat channelID={channelID} close={() => removeWindow(channelID)}/>)}
+			openCreateChannel={() => addWindow('CreateChannel', { right: 200, top: 50 }, <CreateChannel close={() => removeWindow('CreateChannel')}/>)}
+		/>)
+	}, [])
 
 	return (
 		<div className="w-full h-full relative">
-			<ChannelList addChannel={addChannel} openCreateChannel={openCreateChannel}/>
-
-			{isCreating && (
-				<CreateChannel close={() => setIsCreating(false)}/>
-			)}
-
-			<div>
-				{_.map(openChannels, channel => (
-					<Chat
-						key={channel.channelID}
-						channelID={channel.channelID}
-						offset={_.size(openChannels)}
-						close={() => removeChannel(channel.channelID)}
-					/>
-				))}
-			</div>
+			{windowIDs.map(windowID => (
+				<div
+					key={windowID}
+					className="absolute draggable"
+					style={windows[windowID].style}
+					onClick={() => activateWindow(windowID)}
+				>
+					{windows[windowID].element}
+				</div>
+			))}
 		</div>
 	)
 }

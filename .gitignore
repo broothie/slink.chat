@@ -5,3 +5,4 @@ gin-bin
 node_modules
 static/index.js*
 static/style.css
+yarn-error.log

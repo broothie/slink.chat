@@ -26,8 +26,10 @@ export default function ChannelList({ addChannel, openCreateChannel }: {
 	const publicChannels = _.reject(channels, 'private')
 
 	return (
-		<div className="window p-1 flex flex-col w-fit absolute top-10 right-10 h-5/6">
-			<TitleBar title="Channel List" close={signOff}/>
+		<div className="window p-1 flex flex-col w-fit" style={{ height: 800 }}>
+			<div className="draggable-handle">
+				<TitleBar title="Channel List" close={signOff}/>
+			</div>
 
 			<div className="px-2 py-1 font-sans flex-grow flex flex-col">
 				<div className="text-sm flex flex-row justify-between">

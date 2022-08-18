@@ -4,7 +4,7 @@ export type CloseFunction = { (): void }
 
 export default function TitleBar({ title, close }: { title: string, close?: CloseFunction }) {
 	return (
-		<div className="title-bar flex flex-row justify-between h-6 px-1 py-0.5">
+		<div className="title-bar flex flex-row justify-between h-6 px-1 py-0.5 select-none">
 			<p className="text-sm">{title}</p>
 
 			{!!close && (

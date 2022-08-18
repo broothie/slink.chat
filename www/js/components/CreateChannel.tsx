@@ -23,8 +23,10 @@ export default function CreateChannel({close}: { close: CloseFunction }) {
 	}
 
 	return (
-		<div className="window w-72 absolute top-10 right-96">
-			<TitleBar title="Create Channel" close={close}/>
+		<div className="window w-72">
+			<div className="draggable-handle">
+				<TitleBar title="Create Channel" close={close}/>
+			</div>
 
 			<div className="font-sans p-2 flex flex-row space-x-1">
 				<input
