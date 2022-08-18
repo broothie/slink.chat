@@ -1,12 +1,15 @@
 import * as React from "react";
 import {useState} from "react";
+import {Link} from "react-router-dom";
 
 type Submit = {
 	(screenname: string, password: string)
 }
 
-export default function AuthWindow({ title, submit }: {
+export default function AuthWindow({ title, swapText, swapLink, submit }: {
 	title: string,
+	swapText: string,
+	swapLink: string,
   submit: Submit,
 }) {
 	const [screenname, setScreenname] = useState('')
@@ -39,6 +42,10 @@ export default function AuthWindow({ title, submit }: {
 							value={screenname}
 							onChange={e => setScreenname(e.target.value)}
 						/>
+
+						<div>
+							<Link to={swapLink} className="link text-sm">{swapText}</Link>
+						</div>
 					</div>
 
 					<div className="flex flex-col">

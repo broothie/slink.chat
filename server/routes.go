@@ -26,7 +26,11 @@ func (s *Server) routes() chi.Router {
 
 		r.Route("/v1", func(r chi.Router) {
 			r.Post("/users", s.createUser)
-			r.Post("/sessions", s.createSession)
+
+			r.Route("/session", func(r chi.Router) {
+				r.Post("/", s.createSession)
+				r.Delete("/", s.destroySession)
+			})
 
 			r.Group(func(r chi.Router) {
 				r.Use(s.requireUser)

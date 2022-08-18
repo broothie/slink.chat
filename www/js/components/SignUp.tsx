@@ -10,5 +10,5 @@ export default function SignUp() {
 		dispatch(createUser({ screenname, password }))
 	}
 
-	return <AuthWindow title="Sign Up" submit={signUp}/>
+	return <AuthWindow title="Sign Up" swapText="Sign On" swapLink="/signon" submit={signUp}/>
 }

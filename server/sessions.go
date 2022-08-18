@@ -81,6 +81,20 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusOK, util.Map{"user": user})
 }
 
+func (s *Server) destroySession(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	authSession, _ := s.sessions.Get(r, authSessionName)
+	authSession.Values = nil
+	if err := authSession.Save(r, w); err != nil {
+		logger.Info("failed to save auth session")
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	s.render.JSON(w, http.StatusNoContent, nil)
+}
+
 func (s *Server) requireUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := ctxzap.Extract(r.Context())

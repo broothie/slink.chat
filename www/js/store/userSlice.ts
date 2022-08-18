@@ -1,4 +1,4 @@
-import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {User} from "../model/user";
 import axios from "../axios";
 
@@ -18,8 +18,19 @@ export const createSession = createAsyncThunk(
 	'users/createSession',
 	async (params: { screenname: string, password: string }) => {
 		try {
-			const response = await axios.post('/api/v1/sessions', JSON.stringify(params))
+			const response = await axios.post('/api/v1/session', JSON.stringify(params))
 			return response.data.user as User
+		} catch(error) {
+			return null
+		}
+	}
+)
+
+export const destroySession = createAsyncThunk(
+	'users/destroySession',
+	async () => {
+		try {
+			await axios.delete('/api/v1/session')
 		} catch(error) {
 			return null
 		}
@@ -43,9 +54,7 @@ type SliceState = { status: 'not checked', user: null } | { status: 'checking', 
 const userSlice = createSlice({
 	name: 'user',
 	initialState: {status: 'not checked'} as SliceState,
-	reducers: {
-		// update: (state, action: PayloadAction<SliceState>) => action.payload,
-	},
+	reducers: {},
 	extraReducers: builder => {
 		builder.addCase(createUser.fulfilled, (state, action) => {
 			state.user = action.payload
@@ -53,6 +62,10 @@ const userSlice = createSlice({
 
 		builder.addCase(createSession.fulfilled, (state, action) => {
 			state.user = action.payload
+		})
+
+		builder.addCase(destroySession.fulfilled, (state, action) => {
+			state.user = null
 		})
 
 		builder.addCase(fetchCurrentUser.pending, (state, action) => {
