@@ -44,7 +44,8 @@ export default function Chat({ channelID, offset }: { channelID: string, offset:
 
 	let socket
 	function startSocket() {
-		socket = new WebSocket(`ws://${location.host}/api/v1/channels/${channelID}/messages/subscribe`)
+		const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
+		socket = new WebSocket(`${protocol}://${location.host}/api/v1/channels/${channelID}/messages/subscribe`)
 
 		socket.onopen = () => { console.log('open', channelID) }
 		socket.onmessage = event => {
