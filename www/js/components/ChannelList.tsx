@@ -59,9 +59,9 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 						<div>
 							{_.map(privateChannels, channel => (
 								<div
-									key={channel.id}
+									key={channel.channelID}
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
-									onDoubleClick={() => addChannel(channel.id)}
+									onDoubleClick={() => addChannel(channel.channelID)}
 								>
 									<p className="hover:bg-logo-tile hover:text-white p-0.5">
 										{channel.name}
@@ -79,9 +79,9 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 						<div>
 							{_.map(publicChannels, channel => (
 								<div
-									key={channel.id}
+									key={channel.channelID}
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
-									onDoubleClick={() => addChannel(channel.id)}
+									onDoubleClick={() => addChannel(channel.channelID)}
 								>
 									<p className="hover:bg-logo-tile hover:text-white p-0.5">
 										{channel.name}

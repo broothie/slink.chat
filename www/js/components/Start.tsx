@@ -24,7 +24,7 @@ export default function Start() {
 
 			<div>
 				{_.map(openChannels, channel => (
-					<Chat key={channel.id} channelID={channel.id} offset={_.size(openChannels)}/>
+					<Chat key={channel.channelID} channelID={channel.channelID} offset={_.size(openChannels)}/>
 				))}
 			</div>
 		</div>

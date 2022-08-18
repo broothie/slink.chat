@@ -8,14 +8,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const TypeUser Type = "user"
+
 var userContextKey struct{}
 
 type User struct {
-	ID             string    `firestore:"id" json:"id"`
-	CreatedAt      time.Time `firestore:"created_at" json:"createdAt"`
-	UpdatedAt      time.Time `firestore:"updated_at" json:"updatedAt"`
-	Screenname     string    `firestore:"screenname" json:"screenname"`
-	PasswordDigest []byte    `firestore:"password_digest" json:"-"`
+	UserID    string    `firestore:"user_id" json:"userID"`
+	Type      Type      `firestore:"type" json:"type"`
+	CreatedAt time.Time `firestore:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `firestore:"updated_at" json:"updatedAt"`
+
+	Screenname     string `firestore:"screenname" json:"screenname"`
+	PasswordDigest []byte `firestore:"password_digest" json:"-"`
+}
+
+func (User) ModelType() Type {
+	return TypeUser
 }
 
 func (u *User) UpdatePassword(password string) error {

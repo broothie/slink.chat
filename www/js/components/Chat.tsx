@@ -90,11 +90,11 @@ export default function Chat({ channelID, offset }: { channelID: string, offset:
 					className="bg-white inset w-80 h-52 font-serif text-sm p-1 overflow-y-auto whitespace-pre-wrap"
 					ref={windowRef}
 				>
-					{_.sortBy(messages, 'createdAt').map(message => (
-						<p key={message.id}>
+					{messages.map(message => (
+						<p key={message.messageID}>
 							<span className={classNames({
-								'text-indigo-700': message.userID === user.id,
-								'text-red-500': message.userID !== user.id,
+								'text-indigo-700': message.userID === user.userID,
+								'text-red-500': message.userID !== user.userID,
 							})}>
 								{users[message.userID]?.screenname}:
 							</span>

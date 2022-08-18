@@ -23,6 +23,6 @@ func New(cfg *config.Config) (*DB, error) {
 	return &DB{Client: client, cfg: cfg}, nil
 }
 
-func (db *DB) Collection(path string) *firestore.CollectionRef {
-	return db.Client.Collection(fmt.Sprintf("%s.%s", db.cfg.Environment, path))
+func (db *DB) Collection() *firestore.CollectionRef {
+	return db.Client.Collection(fmt.Sprintf("%s.%s", db.cfg.Environment, config.AppName))
 }

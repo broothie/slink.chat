@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -11,10 +12,17 @@ import (
 	"github.com/broothie/slink.chat/model"
 	"github.com/gorilla/securecookie"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/rs/xid"
 )
 
 func main() {
+	environment := flag.String("e", "development", "environment to run in")
+	flag.Parse()
+
+	if err := os.Setenv("ENVIRONMENT", *environment); err != nil {
+		fmt.Println("failed to set environment", err)
+		os.Exit(1)
+	}
+
 	cfg, err := config.New()
 	if err != nil {
 		fmt.Println("failed to get new config", err)
@@ -29,7 +37,8 @@ func main() {
 
 	now := time.Now()
 	smarterChild := model.User{
-		ID:         xid.New().String(),
+		UserID:     model.TypeUser.NewID(),
+		Type:       model.TypeUser,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		Screenname: "SmarterChild",
@@ -40,21 +49,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := db.Collection("users").Doc(smarterChild.ID).Create(context.Background(), smarterChild); err != nil {
+	if _, err := db.Collection().Doc(smarterChild.UserID).Create(context.Background(), smarterChild); err != nil {
 		fmt.Println("failed to create SmarterChild", err)
 		os.Exit(1)
 	}
 
 	// Create World Chat
 	worldChat := model.Channel{
-		ID:        xid.New().String(),
+		ChannelID: model.TypeChannel.NewID(),
+		Type:      model.TypeChannel,
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    smarterChild.ID,
+		UserID:    smarterChild.UserID,
 		Name:      model.WorldChatName,
 	}
 
-	if _, err := db.Collection("channels").Doc(worldChat.ID).Create(context.Background(), worldChat); err != nil {
+	if _, err := db.Collection().Doc(worldChat.ChannelID).Create(context.Background(), worldChat); err != nil {
 		fmt.Println("failed to create World Chat", err)
 		os.Exit(1)
 	}

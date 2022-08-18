@@ -1,17 +1,17 @@
 
 export type User = {
-	id: string,
+	userID: string,
 	screenname: string,
 }
 
 export type Channel = {
-	id: string,
+	channelID: string,
 	name: string,
 	private: boolean,
 }
 
 export type Message = {
-	id: string,
+	messageID: string,
 	body: string,
 	createdAt: string,
 	userID: string,

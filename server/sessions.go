@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"cloud.google.com/go/firestore"
+	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"google.golang.org/api/iterator"
 )
 
 const authSessionName = "auth"
@@ -26,29 +27,17 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snapshots := s.db.
-		Collection("users").
-		Where("screenname", "==", params.Screenname).
-		Limit(1).
-		Documents(r.Context())
-	defer snapshots.Stop()
-
-	snapshot, err := snapshots.Next()
+	user, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("screenname", "==", params.Screenname)
+	})
 	if err != nil {
-		if err == iterator.Done {
+		if err == db.NotFound {
 			logger.Error("user not found", zap.Error(err))
 			s.render.JSON(w, http.StatusUnauthorized, errorMap(errors.New("invalid screenname/password combination")))
 			return
 		}
 
 		logger.Error("failed to search for user", zap.Error(err))
-		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
-		return
-	}
-
-	var user model.User
-	if err := snapshot.DataTo(&user); err != nil {
-		logger.Error("failed to read user data", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
@@ -63,7 +52,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, err := s.newJWTToken(user.ID)
+	jwt, err := s.newJWTToken(user.UserID)
 	if err != nil {
 		logger.Error("failed to create jwt", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -134,16 +123,9 @@ func (s *Server) requireUser(next http.Handler) http.Handler {
 			return
 		}
 
-		snapshot, err := s.db.Collection("users").Doc(userID).Get(r.Context())
+		user, err := db.NewFetcher[model.User](s.db).Fetch(r.Context(), userID)
 		if err != nil {
 			logger.Error("failed to get user from db", zap.Error(err))
-			s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
-			return
-		}
-
-		var user model.User
-		if err := snapshot.DataTo(&user); err != nil {
-			logger.Error("failed to read user data", zap.Error(err))
 			s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 			return
 		}

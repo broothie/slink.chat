@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/rs/xid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -25,15 +25,19 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, _ := model.UserFromContext(r.Context())
 	now := time.Now()
 	channel := model.Channel{
-		ID:        xid.New().String(),
+		ChannelID: model.TypeChannel.NewID(),
+		Type:      model.TypeChannel,
 		CreatedAt: now,
 		UpdatedAt: now,
+		UserID:    user.UserID,
 		Name:      params.Name,
+		Private:   false,
 	}
 
-	if _, err := s.db.Collection("channels").Doc(channel.ID).Create(r.Context(), channel); err != nil {
+	if _, err := s.db.Collection().Doc(channel.ChannelID).Create(r.Context(), channel); err != nil {
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
 	}
@@ -45,145 +49,92 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	user, _ := model.UserFromContext(r.Context())
-	subscriptionSnapshots, err := s.db.
-		Collection("subscriptions").
-		Where("user_id", "==", user.ID).
-		Documents(r.Context()).
-		GetAll()
+	subscriptions, err := db.NewFetcher[model.Subscription](s.db).Query(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("user_id", "==", user.UserID)
+	})
 	if err != nil {
 		logger.Error("failed to get subscriptions", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
-	channelRefs := make([]*firestore.DocumentRef, 0, len(subscriptionSnapshots))
-	for _, snapshot := range subscriptionSnapshots {
-		var subscription model.Subscription
-		if err := snapshot.DataTo(&subscription); err != nil {
-			logger.Error("failed to read subscription data", zap.Error(err))
-			continue
-		}
+	channelIDs := lo.Map(subscriptions, func(subscription model.Subscription, _ int) string {
+		return subscription.ChannelID
+	})
 
-		channelRefs = append(channelRefs, s.db.Collection("channels").Doc(subscription.ChannelID))
-	}
-
-	channelSnapshots, err := s.db.GetAll(r.Context(), channelRefs)
+	channelSlice, err := db.NewFetcher[model.Channel](s.db).FetchMany(r.Context(), channelIDs...)
 	if err != nil {
 		logger.Error("failed to get channels", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
-	channels := make(map[string]model.Channel, len(channelSnapshots))
-	for _, snapshot := range channelSnapshots {
-		var channel model.Channel
-		if err := snapshot.DataTo(&channel); err != nil {
-			logger.Error("failed to read channel data", zap.Error(err))
-			continue
-		}
-
-		channels[channel.ID] = channel
-	}
+	channels := lo.Associate(channelSlice, func(channel model.Channel) (string, model.Channel) {
+		return channel.ChannelID, channel
+	})
 
 	s.render.JSON(w, http.StatusOK, util.Map{"channels": channels})
 }
 
 func (s *Server) showChannel(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
-	channelID := chi.URLParam(r, "channel_id")
 
-	var channel model.Channel
-	channelErr := make(chan error)
-	go func() {
-		snapshot, err := s.db.Collection("channels").Doc(channelID).Get(r.Context())
-		if err != nil {
-			channelErr <- err
-			return
-		}
-
-		channelErr <- snapshot.DataTo(&channel)
-	}()
-
-	messages := make(map[string]model.Message)
-	messagesErr := make(chan error)
-	go func() {
-		snapshots, err := s.db.
-			Collection("channels").
-			Doc(channelID).
-			Collection("messages").
-			OrderBy("created_at", firestore.Desc).
-			Limit(100).
-			Documents(r.Context()).
-			GetAll()
-		if err != nil {
-			messagesErr <- err
-			return
-		}
-
-		for _, snapshot := range snapshots {
-			var message model.Message
-			if err := snapshot.DataTo(&message); err != nil {
-				logger.Error("failed to read message", zap.Error(err))
-				continue
-			}
-
-			messages[message.ID] = message
-		}
-
-		messagesErr <- nil
-	}()
-
-	subscriptionSnapshots, err := s.db.
-		Collection("subscriptions").
-		Where("channel_id", "==", chi.URLParam(r, "channel_id")).
-		Documents(r.Context()).
-		GetAll()
+	docs := s.db.Collection().Where("channel_id", "==", chi.URLParam(r, "channel_id")).Documents(r.Context())
+	defer docs.Stop()
+	snapshots, err := docs.GetAll()
 	if err != nil {
-		logger.Error("failed to get subscriptions", zap.Error(err))
+		logger.Error("failed to get channel data", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
-	userRefs := make([]*firestore.DocumentRef, 0, len(subscriptionSnapshots))
-	for _, snapshot := range subscriptionSnapshots {
-		userID, err := snapshot.DataAt("user_id")
+	var channel model.Channel
+	messages := make(map[string]model.Message)
+	userIDs := make([]string, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		typ, err := snapshot.DataAt("type")
 		if err != nil {
-			logger.Error("failed to get user_id from subscription snapshot", zap.Error(err))
+			logger.Error("failed to get data type", zap.Error(err), zap.String("id", snapshot.Ref.ID))
 			continue
 		}
 
-		userRefs = append(userRefs, s.db.Collection("users").Doc(userID.(string)))
+		switch model.Type(typ.(string)) {
+		case model.TypeChannel:
+			if err := snapshot.DataTo(&channel); err != nil {
+				logger.Error("failed to get channel", zap.Error(err), zap.String("id", snapshot.Ref.ID))
+				continue
+			}
+
+		case model.TypeMessage:
+			var message model.Message
+			if err := snapshot.DataTo(&message); err != nil {
+				logger.Error("failed to get message", zap.Error(err), zap.String("id", snapshot.Ref.ID))
+				continue
+			}
+
+			messages[message.MessageID] = message
+
+		case model.TypeSubscription:
+			userID, err := snapshot.DataAt("user_id")
+			if err != nil {
+				logger.Error("failed to get user id from subscription", zap.Error(err), zap.String("id", snapshot.Ref.ID))
+				continue
+			}
+
+			userIDs = append(userIDs, userID.(string))
+		}
 	}
 
-	userSnapshots, err := s.db.GetAll(r.Context(), userRefs)
+	usersSlice, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), userIDs...)
 	if err != nil {
 		logger.Error("failed to get users", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
-	users := make(map[string]model.User, len(userSnapshots))
-	for _, snapshot := range userSnapshots {
-		var user model.User
-		if err := snapshot.DataTo(&user); err != nil {
-			logger.Error("failed to read user data", zap.Error(err))
-			continue
-		}
-
-		users[user.ID] = user
-	}
-
-	if err := <-channelErr; err != nil {
-		logger.Error("failed to get channel", zap.Error(err))
-		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
-		return
-	}
-
-	if err := <-messagesErr; err != nil {
-		logger.Error("failed to get messages", zap.Error(err))
-		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
-		return
-	}
+	users := lo.Associate(usersSlice, func(user model.User) (string, model.User) {
+		return user.UserID, user
+	})
 
 	s.render.JSON(w, http.StatusOK, util.Map{"channel": channel, "messages": messages, "users": users})
 }
@@ -225,9 +176,9 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 		defer close(dbCloseChan)
 
 		snapshots := s.db.
-			Collection("channels").
-			Doc(chi.URLParam(r, "channel_id")).
-			Collection("messages").
+			Collection().
+			Where("type", "==", model.TypeMessage).
+			Where("channel_id", "==", chi.URLParam(r, "channel_id")).
 			Where("created_at", ">", time.Now()).
 			Snapshots(r.Context())
 		defer snapshots.Stop()
