@@ -16,6 +16,18 @@ export const fetchChannels = createAsyncThunk(
 	}
 )
 
+export const createChannel = createAsyncThunk(
+	'channels/createChannel',
+	async ({ name, isPrivate }: { name: string, isPrivate: boolean }) => {
+		try {
+			const response = await axios.post('/api/v1/channels', { name, 'private': isPrivate })
+			return response.data.channel as Channel
+		} catch(error) {
+			return null
+		}
+	}
+)
+
 const channelsSlice = createSlice({
 	name: 'channels',
 	initialState: {} as ChannelLookup,
@@ -23,6 +35,11 @@ const channelsSlice = createSlice({
 	extraReducers: builder => {
 		builder.addCase(fetchChannels.fulfilled, (state, action) => {
 			return action.payload
+		})
+
+		builder.addCase(createChannel.fulfilled, (state, action) => {
+			const channel = action.payload
+			state[channel.channelID] = channel
 		})
 	}
 })

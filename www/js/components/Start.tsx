@@ -5,10 +5,13 @@ import Chat from "./Chat";
 import {useAppSelector} from "../hooks";
 import * as _ from "lodash";
 import {Channel} from "../model/model";
+import CreateChannel from "./CreateChannel";
 
-export type AddChannel = { (channelID: string) }
+// export type AddChannel = { (channelID: string) }
 
 export default function Start() {
+	const [isCreating, setIsCreating] = useState(false)
+
 	const channels = useAppSelector(state => state.channels)
 	const [openChannels, setOpenChannels] = useState([] as Channel[])
 
@@ -22,9 +25,17 @@ export default function Start() {
 		setOpenChannels(_.without(openChannels, _.find(openChannels, { channelID })))
 	}
 
+	function openCreateChannel() {
+		setIsCreating(true)
+	}
+
 	return (
 		<div className="w-full h-full relative">
-			<ChannelList addChannel={addChannel}/>
+			<ChannelList addChannel={addChannel} openCreateChannel={openCreateChannel}/>
+
+			{isCreating && (
+				<CreateChannel close={() => setIsCreating(false)}/>
+			)}
 
 			<div>
 				{_.map(openChannels, channel => (

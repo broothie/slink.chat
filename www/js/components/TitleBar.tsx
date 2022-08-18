@@ -1,6 +1,8 @@
 import * as React from 'react'
 
-export default function TitleBar({ title, close }: { title: string, close?: React.MouseEventHandler }) {
+export type CloseFunction = { (): void }
+
+export default function TitleBar({ title, close }: { title: string, close?: CloseFunction }) {
 	return (
 		<div className="title-bar flex flex-row justify-between h-6 px-1 py-0.5">
 			<p className="text-sm">{title}</p>

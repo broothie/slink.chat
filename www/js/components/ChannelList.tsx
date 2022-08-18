@@ -3,11 +3,13 @@ import {useAppDispatch, useAppSelector} from "../hooks";
 import {destroySession} from "../store/userSlice";
 import {useEffect} from "react";
 import {fetchChannels} from "../store/channelsSlice";
-import {AddChannel} from "./Start";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
 
-export default function ChannelList({ addChannel }: { addChannel: AddChannel }) {
+export default function ChannelList({ addChannel, openCreateChannel }: {
+	addChannel: { (channelID: string): void },
+	openCreateChannel: { (): void }
+}) {
 	const dispatch = useAppDispatch()
 	const user = useAppSelector(state => state.user.user)
 	const channels = useAppSelector(state => state.channels)
@@ -71,8 +73,12 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 					</div>
 
 					<div>
-						<div className="p-1 border-b border-black">
+						<div className="p-1 border-b border-black flex flex-row justify-between">
 							<p>Channels</p>
+
+							<div>
+								<a className="link" onClick={openCreateChannel}>Create</a>
+							</div>
 						</div>
 
 						<div>

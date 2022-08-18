@@ -20,8 +20,11 @@ import (
 )
 
 func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
 	var params model.Channel
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		logger.Error("failed to decode channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
 	}
@@ -38,7 +41,20 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 		Private:   params.Private,
 	}
 
-	if _, err := s.db.Collection().Doc(channel.ChannelID).Create(r.Context(), channel); err != nil {
+	subscription := model.Subscription{
+		SubscriptionID: model.TypeSubscription.NewID(),
+		Type:           model.TypeSubscription,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+		UserID:         user.UserID,
+		ChannelID:      channel.ChannelID,
+	}
+
+	batch := s.db.Batch()
+	batch.Create(s.db.Collection().Doc(channel.ChannelID), channel)
+	batch.Create(s.db.Collection().Doc(subscription.SubscriptionID), subscription)
+	if _, err := batch.Commit(r.Context()); err != nil {
+		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
 	}

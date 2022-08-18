@@ -49,11 +49,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := db.Collection().Doc(smarterChild.UserID).Create(context.Background(), smarterChild); err != nil {
-		fmt.Println("failed to create SmarterChild", err)
-		os.Exit(1)
-	}
-
 	// Create World Chat
 	worldChat := model.Channel{
 		ChannelID: model.TypeChannel.NewID(),
@@ -62,6 +57,14 @@ func main() {
 		UpdatedAt: now,
 		UserID:    smarterChild.UserID,
 		Name:      model.WorldChatName,
+	}
+
+	batch := db.Batch()
+	batch.Create(db.Collection().Doc(smarterChild.UserID), smarterChild)
+	batch.Create(db.Collection().Doc(worldChat.ChannelID), worldChat)
+	if _, err := batch.Commit(context.Background()); err != nil {
+		fmt.Println("failed to init db defaults", err)
+		os.Exit(1)
 	}
 
 	if _, err := db.Collection().Doc(worldChat.ChannelID).Create(context.Background(), worldChat); err != nil {
