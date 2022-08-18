@@ -10,6 +10,7 @@ import (
 	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
+	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -87,8 +88,28 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusCreated, util.Map{"user": user})
 }
 
-func (s *Server) showUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) showCurrentUser(w http.ResponseWriter, r *http.Request) {
 	user, _ := model.UserFromContext(r.Context())
+	s.render.JSON(w, http.StatusOK, util.Map{"user": user})
+}
+
+func (s *Server) showUser(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	userID := chi.URLParam(r, "user_id")
+	user, err := db.NewFetcher[model.User](s.db).Fetch(r.Context(), userID)
+	if err != nil {
+		if err == db.NotFound {
+			logger.Info("user not found", zap.String("user_id", userID))
+			s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+			return
+		}
+
+		logger.Error("failed to get user", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
 	s.render.JSON(w, http.StatusOK, util.Map{"user": user})
 }
 

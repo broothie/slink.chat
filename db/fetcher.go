@@ -10,6 +10,8 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var NotFound = errors.New("not found")
@@ -27,6 +29,10 @@ func NewFetcher[M model.Model](db *DB) Fetcher[M] {
 func (f Fetcher[Model]) Fetch(ctx context.Context, id string) (Model, error) {
 	snapshot, err := f.db.Collection().Doc(id).Get(ctx)
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return f.Zero(), NotFound
+		}
+
 		return f.Zero(), errors.Wrapf(err, "failed to get %q", f.Type())
 	}
 

@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
 import {useAppSelector} from "../hooks";
 import {MessageLookup} from "../store/messagesSlice";
-import {Channel, Message} from "../model/model";
+import {Channel, Message, User} from "../model/model";
 import classNames from "classnames";
 import {UserLookup} from "../store/usersSlice";
 import axios from "../axios";
@@ -60,6 +60,18 @@ export default function Chat({ channelID, offset }: { channelID: string, offset:
 
 	useEffect(() => {
 		if (!!windowRef.current) windowRef.current?.scrollTo(0, windowRef.current?.scrollHeight)
+	}, [messages])
+
+	useEffect(() => {
+		messages.forEach(message => {
+			const userID = message.userID
+			if (!users[userID]) {
+				axios.get(`/api/v1/users/${userID}`)
+					.then(({ data }: { data: { user: User } }) => {
+						setUsers(users => _.merge({}, users, { [userID]: data.user }))
+					})
+			}
+		})
 	}, [messages])
 
 	useEffect(() => {
