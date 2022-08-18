@@ -7,15 +7,28 @@
     @apply text-link-blue underline cursor-pointer;
   }
 
-  .window {
+  .outset {
     @apply
-      bg-pane-gray
       border-2
       border-t-pane-gray border-l-pane-gray
       border-b-outset-dark-shadow border-r-outset-dark-shadow
     ;
 
     box-shadow: inset 1px 1px white, inset 1px 1px gray;
+  }
+
+  .inset {
+    @apply
+      border
+      border-t-inset-dark-shadow border-l-inset-dark-shadow
+      border-b-inset-light-shadow border-r-inset-light-shadow
+    ;
+
+    box-shadow: inset 1px 1px gray;
+  }
+
+  .window {
+    @apply outset bg-pane-gray;
   }
 
   .title-bar-color {
@@ -32,16 +45,12 @@
 
   .input {
     @apply
-      border
-      border-t-inset-dark-shadow border-l-inset-dark-shadow
-      border-b-inset-light-shadow border-r-inset-light-shadow
+      inset
       outline-0
       text-sm
       px-1 py-0.5
       selection:bg-highlight-color
     ;
-
-    box-shadow: inset 1px 1px gray;
   }
 
   .button {
@@ -50,7 +59,6 @@
     border-2
     border-t-pane-gray border-l-pane-gray
     border-b-outset-dark-shadow border-r-outset-dark-shadow
-    outline-0
   ;
 
     box-shadow: inset 1px 1px white, inset 1px 1px gray;

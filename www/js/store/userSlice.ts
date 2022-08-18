@@ -1,5 +1,5 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import {User} from "../model/user";
+import {User} from "../model/model";
 import axios from "../axios";
 
 export const createUser = createAsyncThunk(
@@ -78,7 +78,5 @@ const userSlice = createSlice({
 		})
 	}
 })
-
-// export const { update } = userSlice.actions
 
 export default userSlice

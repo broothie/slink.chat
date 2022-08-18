@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
@@ -13,10 +14,15 @@ import (
 )
 
 func (s *Server) indexSubscriptions(w http.ResponseWriter, r *http.Request) {
+	type Subscription struct {
+		model.Subscription
+		Name string `json:"name"`
+	}
+
 	logger := ctxzap.Extract(r.Context())
 
 	user, _ := model.UserFromContext(r.Context())
-	snapshots, err := s.db.
+	subscriptionSnapshots, err := s.db.
 		Collection("users").
 		Doc(user.ID).
 		Collection("subscriptions").
@@ -28,15 +34,38 @@ func (s *Server) indexSubscriptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	subscriptions := make([]model.Subscription, 0, len(snapshots))
-	for _, snapshot := range snapshots {
+	subscriptions := make(map[string]Subscription, len(subscriptionSnapshots))
+	channelRefs := make([]*firestore.DocumentRef, 0, len(subscriptionSnapshots))
+	for _, snapshot := range subscriptionSnapshots {
 		var subscription model.Subscription
 		if err := snapshot.DataTo(&subscription); err != nil {
 			logger.Error("failed to read subscription data", zap.Error(err))
 			continue
 		}
 
-		subscriptions = append(subscriptions, subscription)
+		subscriptions[subscription.ChannelID] = Subscription{Subscription: subscription}
+		channelRefs = append(channelRefs, s.db.Collection("channels").Doc(subscription.ChannelID))
+	}
+
+	channelSnapshots, err := s.db.GetAll(r.Context(), channelRefs)
+	if err != nil {
+		logger.Error("failed to get channels", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	for _, snapshot := range channelSnapshots {
+		var channel model.Channel
+		if err := snapshot.DataTo(&channel); err != nil {
+			logger.Error("failed to read channel data", zap.Error(err))
+			continue
+		}
+
+		subscription, found := subscriptions[channel.ID]
+		if found {
+			subscription.Name = channel.Name
+			subscriptions[channel.ID] = subscription
+		}
 	}
 
 	s.render.JSON(w, http.StatusOK, util.Map{"subscriptions": subscriptions})
