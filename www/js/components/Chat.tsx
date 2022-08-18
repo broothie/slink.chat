@@ -1,11 +1,10 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
-import {useAppDispatch, useAppSelector} from "../hooks";
-import {createMessage, fetchMessages, MessageLookup, receiveMessage} from "../store/messagesSlice";
+import {useAppSelector} from "../hooks";
+import {MessageLookup} from "../store/messagesSlice";
 import {Channel, Message} from "../model/model";
 import classNames from "classnames";
-import {fetchChannel} from "../store/channelsSlice";
 import {UserLookup} from "../store/usersSlice";
 import axios from "../axios";
 

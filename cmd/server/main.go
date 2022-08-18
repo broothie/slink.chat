@@ -11,8 +11,6 @@ import (
 )
 
 func main() {
-	fmt.Println("GCP_PROJECT", os.Getenv("GCP_PROJECT"))
-
 	cfg, err := config.New()
 	if err != nil {
 		fmt.Println("failed to get new config", err)
