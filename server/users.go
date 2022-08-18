@@ -37,17 +37,13 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		Limit(1).
 		Documents(r.Context())
 	defer snapshots.Stop()
-
-	snapshot, err := snapshots.Next()
-	if err != nil && err != iterator.Done {
-		logger.Error("failed to look for users", zap.Error(err))
-		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
-		return
-	}
-
-	if snapshot.Exists() {
+	if _, err := snapshots.Next(); err == nil {
 		logger.Info("screenname is taken")
 		s.render.JSON(w, http.StatusBadRequest, errorMap(errors.New("screenname is taken")))
+		return
+	} else if err != iterator.Done {
+		logger.Error("failed to look for users", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
@@ -100,7 +96,7 @@ func (s *Server) showUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) createWorldChatSubscription(ctx context.Context, userID string) error {
 	docs := s.db.
-		Collection("subscriptions").
+		Collection("channels").
 		Where("name", "==", model.WorldChatName).
 		Limit(1).
 		Documents(ctx)
@@ -116,12 +112,12 @@ func (s *Server) createWorldChatSubscription(ctx context.Context, userID string)
 		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    userID,
+		ChannelID: doc.Ref.ID,
 	}
 
 	_, err = s.db.
-		Collection("channels").
-		Doc(doc.Ref.ID).
+		Collection("users").
+		Doc(userID).
 		Collection("subscriptions").
 		Doc(worldChatSubscription.ID).
 		Create(ctx, worldChatSubscription)
