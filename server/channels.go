@@ -239,9 +239,11 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-socketCloseChan:
+			logger.Info("client closed socket")
 			return
 
 		case <-dbCloseChan:
+			logger.Info("db closed stream")
 			return
 
 		case message := <-messages:

@@ -7,6 +7,9 @@ import {Channel, Message, User} from "../model/model";
 import classNames from "classnames";
 import {UserLookup} from "../store/usersSlice";
 import axios from "../axios";
+import TitleBar from "./TitleBar";
+
+type CloseFunction = { (): void }
 
 type ChannelResponse = {
 	channel: Channel,
@@ -22,7 +25,11 @@ const offsets = [
 	{ top: 'top-16', left: 'left-16' },
 ]
 
-export default function Chat({ channelID, offset }: { channelID: string, offset: number }) {
+export default function Chat({ channelID, offset, close }: {
+	channelID: string,
+	offset: number,
+	close: CloseFunction,
+}) {
 	const user = useAppSelector(state => state.user.user)
 	const offsetValues = offsets[offset % offsets.length]
 	const windowRef = useRef()
@@ -91,9 +98,7 @@ export default function Chat({ channelID, offset }: { channelID: string, offset:
 
 	return channel && (
 		<div className={`window p-1 flex flex-col w-fit absolute ${offsetValues.top} ${offsetValues.left}`}>
-			<div className="title-bar">
-				<p className="px-0.5 text-sm">{channel.name} - Instant Message</p>
-			</div>
+			<TitleBar title={`${channel.name} - Instant Message`} close={close}/>
 
 			<div className="hr my-1"></div>
 

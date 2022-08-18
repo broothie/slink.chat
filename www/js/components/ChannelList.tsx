@@ -4,7 +4,7 @@ import {destroySession} from "../store/userSlice";
 import {useEffect} from "react";
 import {fetchChannels} from "../store/channelsSlice";
 import {AddChannel} from "./Start";
-import _ from 'lodash'
+import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
 
 export default function ChannelList({ addChannel }: { addChannel: AddChannel }) {
@@ -20,8 +20,8 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 		dispatch(fetchChannels())
 	}, [])
 
-	const privateChannels = _.filter(channels, channel => channel.private)
-	const publicChannels = _.filter(channels, channel => !channel.private)
+	const privateChannels = _.filter(channels, 'private')
+	const publicChannels = _.reject(channels, 'private')
 
 	return (
 		<div className="window p-1 flex flex-col w-fit absolute top-10 right-10 h-5/6">
@@ -62,7 +62,7 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
 									onDoubleClick={() => addChannel(channel.channelID)}
 								>
-									<p className="hover:bg-logo-tile hover:text-white p-0.5">
+									<p className="hover:bg-logo-tile hover:text-white p-0.5 select-none">
 										{channel.name}
 									</p>
 								</div>
@@ -82,7 +82,7 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
 									onDoubleClick={() => addChannel(channel.channelID)}
 								>
-									<p className="hover:bg-logo-tile hover:text-white p-0.5">
+									<p className="hover:bg-logo-tile hover:text-white p-0.5 select-none">
 										{channel.name}
 									</p>
 								</div>

@@ -18,13 +18,22 @@ export default function Start() {
 		setOpenChannels(openChannels.concat([channels[channelID]]))
 	}
 
+	function removeChannel(channelID: string) {
+		setOpenChannels(_.without(openChannels, _.find(openChannels, { channelID })))
+	}
+
 	return (
 		<div className="w-full h-full relative">
 			<ChannelList addChannel={addChannel}/>
 
 			<div>
 				{_.map(openChannels, channel => (
-					<Chat key={channel.channelID} channelID={channel.channelID} offset={_.size(openChannels)}/>
+					<Chat
+						key={channel.channelID}
+						channelID={channel.channelID}
+						offset={_.size(openChannels)}
+						close={() => removeChannel(channel.channelID)}
+					/>
 				))}
 			</div>
 		</div>
