@@ -36,13 +36,15 @@ func (s *Server) routes() chi.Router {
 				r.Use(s.requireUser)
 
 				r.Get("/user", s.showUser)
-				r.Get("/subscriptions", s.indexSubscriptions)
 
 				r.Route("/channels", func(r chi.Router) {
+					r.Get("/", s.indexChannels)
 					r.Post("/", s.createChannel)
 
 					r.Route("/{channel_id}", func(r chi.Router) {
 						r.Use(injectResourceLog("channel"))
+
+						r.Get("/", s.showChannel)
 
 						r.Route("/subscriptions", func(r chi.Router) {
 							r.Post("/", s.createSubscription)

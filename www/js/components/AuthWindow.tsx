@@ -2,9 +2,7 @@ import * as React from "react";
 import {useState} from "react";
 import {Link} from "react-router-dom";
 
-type Submit = {
-	(screenname: string, password: string)
-}
+type Submit = { (screenname: string, password: string) }
 
 export default function AuthWindow({ title, swapText, swapLink, submit }: {
 	title: string,

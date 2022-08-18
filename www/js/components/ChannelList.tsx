@@ -2,24 +2,25 @@ import * as React from 'react'
 import {useAppDispatch, useAppSelector} from "../hooks";
 import {destroySession} from "../store/userSlice";
 import {useEffect} from "react";
-import {fetchSubscriptions} from "../store/subscriptionSlice";
+import {fetchChannels} from "../store/channelsSlice";
+import {AddChannel} from "./Start";
 import _ from 'lodash'
 
-export default function ChannelList() {
+export default function ChannelList({ addChannel }: { addChannel: AddChannel }) {
 	const dispatch = useAppDispatch()
 	const user = useAppSelector(state => state.user.user)
-	const subscriptions = useAppSelector(state => state.subscriptions)
+	const channels = useAppSelector(state => state.channels)
 
 	function signOff() {
 		dispatch(destroySession())
 	}
 
 	useEffect(() => {
-		dispatch(fetchSubscriptions())
+		dispatch(fetchChannels())
 	}, [])
 
-	const privateSubscriptions = _.filter(_.values(subscriptions), subscription => subscription.private)
-	const publicSubscriptions = _.filter(_.values(subscriptions), subscription => !subscription.private)
+	const privateChannels = _.filter(channels, channel => channel.private)
+	const publicChannels = _.filter(channels, channel => !channel.private)
 
 	return (
 		<div className="window p-1 flex flex-col w-fit absolute top-10 right-10 h-5/6">
@@ -56,9 +57,15 @@ export default function ChannelList() {
 						</div>
 
 						<div>
-							{_.map(privateSubscriptions, subscription => (
-								<div key={subscription.id} className="pl-3 pr-0.5 py-0.5 cursor-pointer">
-									<p className="hover:bg-logo-tile hover:text-white p-0.5">{subscription.name}</p>
+							{_.map(privateChannels, channel => (
+								<div
+									key={channel.id}
+									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
+									onDoubleClick={() => addChannel(channel.id)}
+								>
+									<p className="hover:bg-logo-tile hover:text-white p-0.5">
+										{channel.name}
+									</p>
 								</div>
 							))}
 						</div>
@@ -70,9 +77,15 @@ export default function ChannelList() {
 						</div>
 
 						<div>
-							{_.map(publicSubscriptions, subscription => (
-								<div key={subscription.id} className="pl-3 pr-0.5 py-0.5 cursor-pointer">
-									<p className="hover:bg-logo-tile hover:text-white p-0.5">{subscription.name}</p>
+							{_.map(publicChannels, channel => (
+								<div
+									key={channel.id}
+									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
+									onDoubleClick={() => addChannel(channel.id)}
+								>
+									<p className="hover:bg-logo-tile hover:text-white p-0.5">
+										{channel.name}
+									</p>
 								</div>
 							))}
 						</div>

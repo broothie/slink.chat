@@ -15,11 +15,17 @@ import (
 )
 
 func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
+	type Message struct {
+		model.Message
+		ChannelID string `json:"channelID"`
+	}
+
 	logger := ctxzap.Extract(r.Context())
 
+	channelID := chi.URLParam(r, "channel_id")
 	snapshots, err := s.db.
 		Collection("channels").
-		Doc(chi.URLParam(r, "channel_id")).
+		Doc(channelID).
 		Collection("messages").
 		OrderBy("created_at", firestore.Desc).
 		Limit(100).
@@ -31,15 +37,16 @@ func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages := make([]model.Message, 0, len(snapshots))
+	messages := make(map[string]Message, len(snapshots))
 	for _, snapshot := range snapshots {
-		var message model.Message
+		var message Message
 		if err := snapshot.DataTo(&message); err != nil {
 			logger.Error("failed to read message", zap.Error(err))
 			continue
 		}
 
-		messages = append(messages, message)
+		message.ChannelID = channelID
+		messages[message.ID] = message
 	}
 
 	s.render.JSON(w, http.StatusOK, util.Map{"messages": messages})
@@ -55,11 +62,13 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, _ := model.UserFromContext(r.Context())
 	now := time.Now()
 	message := model.Message{
 		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
+		UserID:    user.ID,
 		Body:      params.Body,
 	}
 

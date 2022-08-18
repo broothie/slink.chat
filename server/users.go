@@ -112,16 +112,11 @@ func (s *Server) createWorldChatSubscription(ctx context.Context, userID string)
 		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
+		UserID:    userID,
 		ChannelID: doc.Ref.ID,
 	}
 
-	_, err = s.db.
-		Collection("users").
-		Doc(userID).
-		Collection("subscriptions").
-		Doc(worldChatSubscription.ID).
-		Create(ctx, worldChatSubscription)
-	if err != nil {
+	if _, err = s.db.Collection("subscriptions").Doc(worldChatSubscription.ID).Create(ctx, worldChatSubscription); err != nil {
 		return errors.Wrap(err, "failed to create world chat subscription")
 	}
 

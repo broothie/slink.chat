@@ -41,6 +41,153 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusCreated, util.Map{"channel": channel})
 }
 
+func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	user, _ := model.UserFromContext(r.Context())
+	subscriptionSnapshots, err := s.db.
+		Collection("subscriptions").
+		Where("user_id", "==", user.ID).
+		Documents(r.Context()).
+		GetAll()
+	if err != nil {
+		logger.Error("failed to get subscriptions", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	channelRefs := make([]*firestore.DocumentRef, 0, len(subscriptionSnapshots))
+	for _, snapshot := range subscriptionSnapshots {
+		var subscription model.Subscription
+		if err := snapshot.DataTo(&subscription); err != nil {
+			logger.Error("failed to read subscription data", zap.Error(err))
+			continue
+		}
+
+		channelRefs = append(channelRefs, s.db.Collection("channels").Doc(subscription.ChannelID))
+	}
+
+	channelSnapshots, err := s.db.GetAll(r.Context(), channelRefs)
+	if err != nil {
+		logger.Error("failed to get channels", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	channels := make(map[string]model.Channel, len(channelSnapshots))
+	for _, snapshot := range channelSnapshots {
+		var channel model.Channel
+		if err := snapshot.DataTo(&channel); err != nil {
+			logger.Error("failed to read channel data", zap.Error(err))
+			continue
+		}
+
+		channels[channel.ID] = channel
+	}
+
+	s.render.JSON(w, http.StatusOK, util.Map{"channels": channels})
+}
+
+func (s *Server) showChannel(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+	channelID := chi.URLParam(r, "channel_id")
+
+	var channel model.Channel
+	channelErr := make(chan error)
+	go func() {
+		snapshot, err := s.db.Collection("channels").Doc(channelID).Get(r.Context())
+		if err != nil {
+			channelErr <- err
+			return
+		}
+
+		channelErr <- snapshot.DataTo(&channel)
+	}()
+
+	messages := make(map[string]model.Message)
+	messagesErr := make(chan error)
+	go func() {
+		snapshots, err := s.db.
+			Collection("channels").
+			Doc(channelID).
+			Collection("messages").
+			OrderBy("created_at", firestore.Desc).
+			Limit(100).
+			Documents(r.Context()).
+			GetAll()
+		if err != nil {
+			messagesErr <- err
+			return
+		}
+
+		for _, snapshot := range snapshots {
+			var message model.Message
+			if err := snapshot.DataTo(&message); err != nil {
+				logger.Error("failed to read message", zap.Error(err))
+				continue
+			}
+
+			messages[message.ID] = message
+		}
+
+		messagesErr <- nil
+	}()
+
+	subscriptionSnapshots, err := s.db.
+		Collection("subscriptions").
+		Where("channel_id", "==", chi.URLParam(r, "channel_id")).
+		Documents(r.Context()).
+		GetAll()
+	if err != nil {
+		logger.Error("failed to get subscriptions", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	userRefs := make([]*firestore.DocumentRef, 0, len(subscriptionSnapshots))
+	for _, snapshot := range subscriptionSnapshots {
+		userID, err := snapshot.DataAt("user_id")
+		if err != nil {
+			logger.Error("failed to get user_id from subscription snapshot", zap.Error(err))
+			continue
+		}
+
+		userRefs = append(userRefs, s.db.Collection("users").Doc(userID.(string)))
+	}
+
+	userSnapshots, err := s.db.GetAll(r.Context(), userRefs)
+	if err != nil {
+		logger.Error("failed to get users", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	users := make(map[string]model.User, len(userSnapshots))
+	for _, snapshot := range userSnapshots {
+		var user model.User
+		if err := snapshot.DataTo(&user); err != nil {
+			logger.Error("failed to read user data", zap.Error(err))
+			continue
+		}
+
+		users[user.ID] = user
+	}
+
+	if err := <-channelErr; err != nil {
+		logger.Error("failed to get channel", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	if err := <-messagesErr; err != nil {
+		logger.Error("failed to get messages", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	s.render.JSON(w, http.StatusOK, util.Map{"channel": channel, "messages": messages, "users": users})
+}
+
 func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 

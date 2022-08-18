@@ -50,7 +50,7 @@ func main() {
 		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    "asdf",
+		UserID:    smarterChild.ID,
 		Name:      model.WorldChatName,
 	}
 

@@ -1,11 +1,19 @@
 
 export type User = {
+	id: string,
 	screenname: string,
 }
 
-export type Subscription = {
+export type Channel = {
 	id: string,
-	channelID: string,
-	channelName: string,
+	name: string,
 	private: boolean,
+}
+
+export type Message = {
+	id: string,
+	body: string,
+	createdAt: string,
+	userID: string,
+	channelID: string,
 }
