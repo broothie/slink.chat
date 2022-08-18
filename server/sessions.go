@@ -29,6 +29,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 	snapshots := s.db.
 		Collection("users").
 		Where("screenname", "==", params.Screenname).
+		Limit(1).
 		Documents(r.Context())
 	defer snapshots.Stop()
 

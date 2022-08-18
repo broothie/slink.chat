@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -33,6 +34,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	snapshots := s.db.
 		Collection("users").
 		Where("screenname", "==", params.Screenname).
+		Limit(1).
 		Documents(r.Context())
 	defer snapshots.Stop()
 
@@ -69,6 +71,10 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := s.createWorldChatSubscription(r.Context(), user.ID); err != nil {
+		logger.Error("failed to create world chat subscription", zap.Error(err))
+	}
+
 	jwt, err := s.newJWTToken(user.ID)
 	if err != nil {
 		logger.Error("failed to create jwt", zap.Error(err))
@@ -90,4 +96,38 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 func (s *Server) showUser(w http.ResponseWriter, r *http.Request) {
 	user, _ := model.UserFromContext(r.Context())
 	s.render.JSON(w, http.StatusOK, util.Map{"user": user})
+}
+
+func (s *Server) createWorldChatSubscription(ctx context.Context, userID string) error {
+	docs := s.db.
+		Collection("subscriptions").
+		Where("name", "==", model.WorldChatName).
+		Limit(1).
+		Documents(ctx)
+	defer docs.Stop()
+
+	doc, err := docs.Next()
+	if err != nil {
+		return errors.Wrap(err, "failed to get world chat channel")
+	}
+
+	now := time.Now()
+	worldChatSubscription := model.Subscription{
+		ID:        xid.New().String(),
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID:    userID,
+	}
+
+	_, err = s.db.
+		Collection("channels").
+		Doc(doc.Ref.ID).
+		Collection("subscriptions").
+		Doc(worldChatSubscription.ID).
+		Create(ctx, worldChatSubscription)
+	if err != nil {
+		return errors.Wrap(err, "failed to create world chat subscription")
+	}
+
+	return nil
 }
