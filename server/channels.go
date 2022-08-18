@@ -41,7 +41,7 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusCreated, util.Map{"channel": channel})
 }
 
-func (s *Server) channelSubscribe(w http.ResponseWriter, r *http.Request) {
+func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	upgrader := &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}

@@ -39,11 +39,15 @@ func (s *Server) routes() chi.Router {
 					r.Route("/{channel_id}", func(r chi.Router) {
 						r.Use(injectResourceLog("channel"))
 
-						r.Get("/subscribe", s.channelSubscribe)
+						r.Route("/subscriptions", func(r chi.Router) {
+							r.Get("/", s.indexSubscriptions)
+							r.Post("/", s.createSubscription)
+						})
 
 						r.Route("/messages", func(r chi.Router) {
 							r.Get("/", s.indexMessages)
 							r.Post("/", s.createMessage)
+							r.Get("/subscribe", s.channelSocket)
 						})
 					})
 				})
