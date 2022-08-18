@@ -11,6 +11,7 @@ import (
 	"github.com/broothie/slink.chat/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -44,7 +45,22 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	channelID := chi.URLParam(r, "channel_id")
 	user, _ := model.UserFromContext(r.Context())
+	if _, err := db.NewFetcher[model.Subscription](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("user_id", "==", user.UserID).Where("channel_id", "==", channelID)
+	}); err != nil {
+		if err == db.NotFound {
+			logger.Info("user not in channel")
+			s.render.JSON(w, http.StatusUnauthorized, errorMap(errors.New("user not in channel")))
+			return
+		}
+
+		logger.Error("error finding subscription")
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
 	now := time.Now()
 	message := model.Message{
 		MessageID: model.TypeMessage.NewID(),
@@ -52,7 +68,7 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: now,
 		UpdatedAt: now,
 		UserID:    user.UserID,
-		ChannelID: chi.URLParam(r, "channel_id"),
+		ChannelID: channelID,
 		Body:      params.Body,
 	}
 

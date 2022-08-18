@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -34,7 +35,7 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: now,
 		UserID:    user.UserID,
 		Name:      params.Name,
-		Private:   false,
+		Private:   params.Private,
 	}
 
 	if _, err := s.db.Collection().Doc(channel.ChannelID).Create(r.Context(), channel); err != nil {
@@ -142,6 +143,22 @@ func (s *Server) showChannel(w http.ResponseWriter, r *http.Request) {
 func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
+	user, _ := model.UserFromContext(r.Context())
+	channelID := chi.URLParam(r, "channel_id")
+	if _, err := db.NewFetcher[model.Subscription](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("user_id", "==", user.UserID).Where("channel_id", "==", channelID)
+	}); err != nil {
+		if err == db.NotFound {
+			logger.Info("user not in channel")
+			s.render.JSON(w, http.StatusUnauthorized, errorMap(errors.New("user not in channel")))
+			return
+		}
+
+		logger.Error("error finding subscription")
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
 	upgrader := &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -178,7 +195,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 		snapshots := s.db.
 			Collection().
 			Where("type", "==", model.TypeMessage).
-			Where("channel_id", "==", chi.URLParam(r, "channel_id")).
+			Where("channel_id", "==", channelID).
 			Where("created_at", ">", time.Now()).
 			Snapshots(r.Context())
 		defer snapshots.Stop()
