@@ -1,6 +1,7 @@
 import * as React from "react";
 import {useState} from "react";
 import {Link} from "react-router-dom";
+import TitleBar from "./TitleBar";
 
 type Submit = { (screenname: string, password: string) }
 
@@ -15,7 +16,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 
 	return (
 		<div className="p-1 flex flex-col self-center mx-auto window">
-			<div className="w-full title-bar"><p className="px-0.5 text-sm">{title}</p></div>
+			<TitleBar title={title}/>
 
 			<div className="px-2 py-1 font-sans">
 				<div className="bg-logo-tile flex flex-col items-center p-2">

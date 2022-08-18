@@ -5,6 +5,7 @@ import {useEffect} from "react";
 import {fetchChannels} from "../store/channelsSlice";
 import {AddChannel} from "./Start";
 import _ from 'lodash'
+import TitleBar from "./TitleBar";
 
 export default function ChannelList({ addChannel }: { addChannel: AddChannel }) {
 	const dispatch = useAppDispatch()
@@ -24,9 +25,7 @@ export default function ChannelList({ addChannel }: { addChannel: AddChannel }) 
 
 	return (
 		<div className="window p-1 flex flex-col w-fit absolute top-10 right-10 h-5/6">
-			<div className="title-bar">
-				<p className="px-0.5 text-sm">Channel List</p>
-			</div>
+			<TitleBar title="Channel List" close={signOff}/>
 
 			<div className="px-2 py-1 font-sans flex-grow flex flex-col">
 				<div className="text-sm flex flex-row justify-between">
