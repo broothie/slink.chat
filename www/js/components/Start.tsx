@@ -4,6 +4,7 @@ import {useEffect, useState} from "react";
 import Chat from "./Chat";
 import * as _ from "lodash";
 import CreateChannel from "./CreateChannel";
+import CreateChat from "./CreateChat";
 
 export default function Start() {
 	const [windowIDs, setWindowIDs] = useState([])
@@ -34,6 +35,12 @@ export default function Start() {
 		))
 	}
 
+	function openCreateChat() {
+		addWindow('CreateChat', { right: 400, top: 50 }, (
+			<CreateChat close={() => removeWindow('CreateChat')}/>
+		))
+	}
+
 	function openCreateChannel() {
 		addWindow('CreateChannel', { right: 400, top: 50 }, (
 			<CreateChannel close={() => removeWindow('CreateChannel')} addChannel={addChannel}/>
@@ -42,7 +49,11 @@ export default function Start() {
 
 	useEffect(() => {
 		addWindow('ChannelList', { right: 50, top: 50 }, (
-			<ChannelList addChannel={addChannel} openCreateChannel={openCreateChannel}/>
+			<ChannelList
+				addChannel={addChannel}
+				openCreateChannel={openCreateChannel}
+				openCreateChat={openCreateChat}
+			/>
 		))
 	}, [])
 

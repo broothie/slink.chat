@@ -6,9 +6,10 @@ import {destroyChannel, fetchChannels} from "../store/channelsSlice";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
 
-export default function ChannelList({ addChannel, openCreateChannel }: {
-	addChannel: { (channelID: string): void },
-	openCreateChannel: { (): void }
+export default function ChannelList({ addChannel, openCreateChannel, openCreateChat }: {
+	addChannel: { (channelID: string) },
+	openCreateChannel: { () },
+	openCreateChat: { () },
 }) {
 	const dispatch = useAppDispatch()
 	const user = useAppSelector(state => state.user.user)
@@ -59,8 +60,12 @@ export default function ChannelList({ addChannel, openCreateChannel }: {
 
 				<div className="bg-white inset px-2 py-1 text-sm flex-grow">
 					<div>
-						<div className="p-1 border-b border-black">
+						<div className="p-1 border-b border-black flex flex-row justify-between">
 							<p>Chats</p>
+
+							<div>
+								<a className="link" onClick={openCreateChat}>Create</a>
+							</div>
 						</div>
 
 						<div>
