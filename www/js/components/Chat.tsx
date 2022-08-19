@@ -2,7 +2,6 @@ import * as React from 'react'
 import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
 import {useAppSelector} from "../hooks";
-import {MessageLookup} from "../store/messagesSlice";
 import {Channel, Message, User} from "../model/model";
 import classNames from "classnames";
 import {UserLookup} from "../store/usersSlice";
@@ -10,6 +9,8 @@ import axios from "../axios";
 import TitleBar from "./TitleBar";
 
 type CloseFunction = { (): void }
+
+type MessageLookup = { [key: string]: Message }
 
 type ChannelResponse = {
 	channel: Channel,
@@ -29,18 +30,25 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 	function textareaOnChange(event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault()
-			sendMessage().catch(console.error)
+			sendMessage()
 		}
 	}
 
-	async function sendMessage() {
-		if (message !== '') {
-			try {
-				await axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
-				setMessage('')
-			} catch (error) {
-				console.error(error)
-			}
+	function sendMessage() {
+		axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
+			.then(() => setMessage(''))
+	}
+
+	function addMessage(message: Message) {
+		setMessages(messages => _.sortBy(messages.concat([message]), 'createdAt'))
+
+		if (!users[message.userID]) {
+			const userID = message.userID
+
+			axios.get(`/api/v1/users/${userID}`)
+				.then(({ data }: { data: { user: User } }) => {
+					setUsers(users => _.merge({}, users, { [userID]: data.user }))
+				})
 		}
 	}
 
@@ -53,7 +61,7 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 		socket.onopen = () => { console.log('socket opened', channelID) }
 		socket.onmessage = event => {
 			const message = JSON.parse(event.data) as Message
-			setMessages(messages => _.sortBy(messages.concat([message]), 'createdAt'))
+			addMessage(message)
 		}
 
 		socket.onclose = event => {
@@ -65,19 +73,10 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 	}
 
 	useEffect(() => {
-		if (!!windowRef.current) windowRef.current?.scrollTo(0, windowRef.current?.scrollHeight)
-	}, [messages])
-
-	useEffect(() => {
-		messages.forEach(message => {
-			const userID = message.userID
-			if (!users[userID]) {
-				axios.get(`/api/v1/users/${userID}`)
-					.then(({ data }: { data: { user: User } }) => {
-						setUsers(users => _.merge({}, users, { [userID]: data.user }))
-					})
-			}
-		})
+		if (!!windowRef.current) {
+			const window = windowRef.current as HTMLElement
+			window?.scrollTo(0, window?.scrollHeight)
+		}
 	}, [messages])
 
 	useEffect(() => {

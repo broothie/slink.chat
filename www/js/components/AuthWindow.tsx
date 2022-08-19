@@ -19,7 +19,8 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 	function submitForm(event) {
 		event.preventDefault()
 
-		if (formRef.current?.checkValidity()) submit(screenname, password)
+		const form = formRef.current as HTMLFormElement
+		if (form?.checkValidity()) submit(screenname, password)
 	}
 
 	return (
