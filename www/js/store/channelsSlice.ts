@@ -7,48 +7,32 @@ export type ChannelLookup = { [key: string]: Channel }
 export const fetchChannels = createAsyncThunk(
 	'channels/fetchChannels',
 	async () => {
-		try {
-			const response = await axios.get('/api/v1/channels')
-			return response.data.channels as ChannelLookup
-		} catch(error) {
-			return null
-		}
+		const response = await axios.get('/api/v1/channels')
+		return response.data.channels as ChannelLookup
 	}
 )
 
 export const createChannel = createAsyncThunk(
 	'channels/createChannel',
 	async ({ name, isPrivate }: { name: string, isPrivate: boolean }) => {
-		try {
-			const response = await axios.post('/api/v1/channels', { name, 'private': isPrivate })
-			return response.data.channel as Channel
-		} catch(error) {
-			return null
-		}
+		const response = await axios.post('/api/v1/channels', { name, 'private': isPrivate })
+		return response.data.channel as Channel
 	}
 )
 
 export const createChat = createAsyncThunk(
 	'channels/createChat',
 	async (users: User[]) => {
-		try {
-			const response = await axios.post('/api/v1/chats', users)
-			return response.data.channel as Channel
-		} catch(error) {
-			return null
-		}
+		const response = await axios.post('/api/v1/chats', users)
+		return response.data.channel as Channel
 	}
 )
 
 export const destroyChannel = createAsyncThunk(
 	'channels/destroyChannel',
 	async (channelID: string) => {
-		try {
-			const response = await axios.delete(`/api/v1/channels/${channelID}`)
-			return response.data.channelID
-		} catch(error) {
-			return null
-		}
+		const response = await axios.delete(`/api/v1/channels/${channelID}`)
+		return response.data.channelID
 	}
 )
 

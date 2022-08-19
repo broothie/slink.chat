@@ -5,47 +5,32 @@ import axios from "../axios";
 export const createUser = createAsyncThunk(
 	'users/createUser',
 	async (params: { screenname: string, password: string }) => {
-		try {
-			const response = await axios.post('/api/v1/users', JSON.stringify(params))
-			return response.data.user as User
-		} catch(error) {
-			return null
-		}
+		const response = await axios.post('/api/v1/users', JSON.stringify(params))
+		return response.data.user as User
 	}
 )
 
 export const createSession = createAsyncThunk(
 	'users/createSession',
 	async (params: { screenname: string, password: string }) => {
-		try {
-			const response = await axios.post('/api/v1/session', JSON.stringify(params))
-			return response.data.user as User
-		} catch(error) {
-			return null
-		}
+		const response = await axios.post('/api/v1/session', JSON.stringify(params))
+		return response.data.user as User
 	}
 )
 
 export const destroySession = createAsyncThunk(
 	'users/destroySession',
 	async () => {
-		try {
-			await axios.delete('/api/v1/session')
-		} catch(error) {
-			return null
-		}
+		await axios.delete('/api/v1/session')
+		return null
 	}
 )
 
 export const fetchCurrentUser = createAsyncThunk(
 	'users/fetchCurrentUser',
 	async () => {
-		try {
-			const response = await axios.get('/api/v1/user')
-			return response.data.user as User
-		} catch(error) {
-			return null
-		}
+		const response = await axios.get('/api/v1/user')
+		return response.data.user as User
 	}
 )
 

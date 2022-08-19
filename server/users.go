@@ -39,7 +39,6 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		logger.Info("screenname is taken")
 		s.render.JSON(w, http.StatusBadRequest, errorMap(errors.New("screenname is taken")))
 		return
-
 	} else if err != db.NotFound {
 		logger.Error("failed to look for users", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
