@@ -50,7 +50,7 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 		const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
 		socket = new WebSocket(`${protocol}://${location.host}/api/v1/channels/${channelID}/messages/subscribe`)
 
-		socket.onopen = () => { console.log('open', channelID) }
+		socket.onopen = () => { console.log('socket opened', channelID) }
 		socket.onmessage = event => {
 			const message = JSON.parse(event.data) as Message
 			setMessages(messages => _.sortBy(messages.concat([message]), 'createdAt'))
@@ -96,6 +96,7 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 		return () => {
 			closedByClient = true
 			socket.close()
+			console.log('socket closed', channelID)
 		}
 	}, [])
 
