@@ -178,6 +178,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	upgrader := &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		logger.Error("failed to upgrade request", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
@@ -208,6 +209,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer close(dbCloseChan)
 
+		logger.Debug("listening for messages")
 		snapshots := s.db.
 			Collection().
 			Where("type", "==", model.TypeMessage).
@@ -252,6 +254,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	logger.Debug("socket opened")
 	for {
 		select {
 		case <-socketCloseChan:
