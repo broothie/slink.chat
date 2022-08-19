@@ -12,6 +12,7 @@ export default function Start() {
 	function addWindow(id: string, style: Object, element: React.ReactNode) {
 		setWindowIDs(windowIDs => _.uniq(windowIDs.concat([id])))
 		setWindows(windows => _.merge({}, windows, { [id]: { style, element } }))
+		activateWindow(id)
 	}
 
 	function removeWindow(id: string) {
@@ -27,11 +28,22 @@ export default function Start() {
 		setWindowIDs(windowIDs => _.sortBy(windowIDs, windowID => windowID === id))
 	}
 
+	function addChannel(channelID: string) {
+		addWindow(channelID, { left: 50, top: 50 }, (
+			<Chat channelID={channelID} close={() => removeWindow(channelID)}/>
+		))
+	}
+
+	function openCreateChannel() {
+		addWindow('CreateChannel', { right: 400, top: 50 }, (
+			<CreateChannel close={() => removeWindow('CreateChannel')} addChannel={addChannel}/>
+		))
+	}
+
 	useEffect(() => {
-		addWindow('ChannelList', { right: 50, top: 50 }, <ChannelList
-			addChannel={channelID => addWindow(channelID, { left: 50, top: 50 }, <Chat channelID={channelID} close={() => removeWindow(channelID)}/>)}
-			openCreateChannel={() => addWindow('CreateChannel', { right: 200, top: 50 }, <CreateChannel close={() => removeWindow('CreateChannel')}/>)}
-		/>)
+		addWindow('ChannelList', { right: 50, top: 50 }, (
+			<ChannelList addChannel={addChannel} openCreateChannel={openCreateChannel}/>
+		))
 	}, [])
 
 	return (

@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useState} from "react";
+import {useRef, useState} from "react";
 import {Link} from "react-router-dom";
 import TitleBar from "./TitleBar";
 
@@ -13,6 +13,14 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 }) {
 	const [screenname, setScreenname] = useState('')
 	const [password, setPassword] = useState('')
+
+	const formRef = useRef()
+
+	function submitForm(event) {
+		event.preventDefault()
+
+		if (formRef.current?.checkValidity()) submit(screenname, password)
+	}
 
 	return (
 		<div className="p-1 flex flex-col self-center mx-auto window draggable">
@@ -31,7 +39,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 
 				<div className="hr my-2"></div>
 
-				<div className="space-y-2">
+				<form ref={formRef} className="space-y-2" onSubmit={submitForm}>
 					<div className="flex flex-col">
 						<label htmlFor="screenname" className="text-sm italic font-bold text-emphasis-text">ScreenName</label>
 						<input
@@ -55,6 +63,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 							id="password"
 							type="password"
 							className="input"
+							minLength={8}
 							required={true}
 							value={password}
 							onChange={e => setPassword(e.target.value)}
@@ -63,11 +72,15 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 
 					<div className="flex flex-row justify-between items-center py-1">
 						<a href="https://github.com/broothie/slink.chat" className="text-sm link">GitHub</a>
-						<button className="button py-0.5 px-1 text-sm" onClick={() => submit(screenname, password)}>
+						<button
+							type="submit"
+							className="button py-0.5 px-1 text-sm"
+							disabled={screenname === '' || password.length < 8}
+						>
 							{title}
 						</button>
 					</div>
-				</div>
+				</form>
 			</div>
 		</div>
 	)

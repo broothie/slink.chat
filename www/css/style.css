@@ -9,7 +9,7 @@
 
   .outset {
     @apply
-      border-2
+      border
       border-t-pane-gray border-l-pane-gray
       border-b-outset-dark-shadow border-r-outset-dark-shadow
     ;
@@ -54,13 +54,12 @@
   }
 
   .button {
-    @apply
-    bg-pane-gray
-    border-2
-    border-t-pane-gray border-l-pane-gray
-    border-b-outset-dark-shadow border-r-outset-dark-shadow
-  ;
+    @apply outset bg-pane-gray;
 
     box-shadow: inset 1px 1px white, inset 1px 1px gray;
+
+    &:disabled {
+      @apply inset;
+    }
   }
 }

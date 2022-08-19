@@ -26,15 +26,25 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 	const [messages, setMessages] = useState([] as Message[])
 	const [users, setUsers] = useState({} as UserLookup)
 
-	async function sendMessage() {
-		try {
-			await axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
-			setMessage('')
-		} catch (error) {
-			console.error(error)
+	function textareaOnChange(event) {
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault()
+			sendMessage().catch(console.error)
 		}
 	}
 
+	async function sendMessage() {
+		if (message !== '') {
+			try {
+				await axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
+				setMessage('')
+			} catch (error) {
+				console.error(error)
+			}
+		}
+	}
+
+	let closedByClient = false
 	let socket
 	function startSocket() {
 		const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
@@ -47,6 +57,8 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 		}
 
 		socket.onclose = event => {
+			if (closedByClient) return
+
 			console.log('server closed socket', {channelID, event})
 			setTimeout(startSocket, 1000)
 		}
@@ -80,7 +92,11 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 
 	useEffect(() => {
 		startSocket()
-		return () => { socket.close() }
+
+		return () => {
+			closedByClient = true
+			socket.close()
+		}
 	}, [])
 
 	return channel && (
@@ -111,24 +127,28 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 
 				<div className="hr my-0.5"></div>
 
-				<textarea
-					name="message"
-					id="message"
-					rows={2}
-					className="bg-white inset resize-none w-full p-1 outline-0 font-serif text-sm overflow-y-auto"
-					autoFocus={true}
-					value={message}
-					onChange={e => setMessage(e.target.value)}
-				>
-			</textarea>
+				<div>
+					<textarea
+						name="message"
+						id="message"
+						rows={2}
+						className="bg-white inset resize-none w-full p-1 outline-0 font-serif text-sm overflow-y-auto"
+						autoFocus={true}
+						value={message}
+						onChange={e => setMessage(e.target.value)}
+						onKeyDown={textareaOnChange}
+					></textarea>
 
-				<div className="flex flex-row justify-end pb-2">
-					<button
-						className="button px-1 py-0.5 text-sm"
-						onClick={sendMessage}
-					>
-						Send
-					</button>
+					<div className="flex flex-row justify-end pb-2">
+						<button
+							type="submit"
+							className="button px-1 py-0.5 text-sm"
+							disabled={message === ''}
+							onClick={sendMessage}
+						>
+							Send
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
