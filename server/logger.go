@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/broothie/slink.chat/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
@@ -25,6 +26,12 @@ func (s *Server) loggerInjector(next http.Handler) http.Handler {
 			zap.String("path", r.URL.Path),
 			zap.String("request_id", middleware.GetReqID(r.Context())),
 			zap.String("remote_addr", r.RemoteAddr),
+			zap.Any("httpRequest", util.Map{
+				"requestMethod": r.Method,
+				"requestUrl":    r.URL.String(),
+				"userAgent":     r.UserAgent(),
+				"referer":       r.Referer(),
+			}),
 		}
 
 		if traceParent := r.Header.Get("Traceparent"); traceParent != "" {

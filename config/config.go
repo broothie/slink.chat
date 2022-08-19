@@ -6,6 +6,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const AppName = "slink"
@@ -54,7 +55,15 @@ func (c *Config) Collection(name string) string {
 
 func (c *Config) NewLogger() (*zap.Logger, error) {
 	if c.IsHosted() {
-		return zap.NewProduction()
+		encoderConfig := zap.NewProductionEncoderConfig()
+		encoderConfig.MessageKey = "message"
+		encoderConfig.LevelKey = "severity"
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+
+		cfg := zap.NewProductionConfig()
+		cfg.EncoderConfig = encoderConfig
+
+		return cfg.Build()
 	} else {
 		return zap.NewDevelopment()
 	}
