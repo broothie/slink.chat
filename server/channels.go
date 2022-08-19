@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -53,6 +54,63 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	batch := s.db.Batch()
 	batch.Create(s.db.Collection().Doc(channel.ChannelID), channel)
 	batch.Create(s.db.Collection().Doc(subscription.SubscriptionID), subscription)
+	if _, err := batch.Commit(r.Context()); err != nil {
+		logger.Error("failed to create channel", zap.Error(err))
+		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+		return
+	}
+
+	if !channel.Private {
+		if _, err := s.channelsSearchIndex().SaveObject(util.Map{"objectID": channel.ChannelID, "name": channel.Name}); err != nil {
+			logger.Error("failed to update channel search index", zap.Error(err))
+		}
+	}
+
+	s.render.JSON(w, http.StatusCreated, util.Map{"channel": channel})
+}
+
+func (s *Server) createChat(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	var users []model.User
+	if err := json.NewDecoder(r.Body).Decode(&users); err != nil {
+		logger.Error("failed to decode users", zap.Error(err))
+		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+		return
+	}
+
+	user, _ := model.UserFromContext(r.Context())
+	if lo.NoneBy(users, func(u model.User) bool { return u.UserID == user.UserID }) {
+		users = append(users, user)
+	}
+
+	name := strings.Join(lo.Map(users, func(user model.User, _ int) string { return user.Screenname }), ", ")
+	now := time.Now()
+	channel := model.Channel{
+		ChannelID: model.TypeChannel.NewID(),
+		Type:      model.TypeChannel,
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID:    user.UserID,
+		Name:      name,
+		Private:   true,
+	}
+
+	batch := s.db.Batch()
+	batch.Create(s.db.Collection().Doc(channel.ChannelID), channel)
+	for _, user := range users {
+		subscription := model.Subscription{
+			SubscriptionID: model.TypeSubscription.NewID(),
+			Type:           model.TypeSubscription,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+			UserID:         user.UserID,
+			ChannelID:      channel.ChannelID,
+		}
+
+		batch.Create(s.db.Collection().Doc(subscription.SubscriptionID), subscription)
+	}
+
 	if _, err := batch.Commit(r.Context()); err != nil {
 		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))

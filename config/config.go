@@ -11,10 +11,12 @@ import (
 const AppName = "slink"
 
 type Config struct {
-	Environment string `envconfig:"ENVIRONMENT" required:"true"`
-	ProjectID   string `envconfig:"PROJECT_ID" required:"true"`
-	Port        int    `envconfig:"PORT" required:"true"`
-	Secret      string `envconfig:"SECRET" required:"true"`
+	Environment   string `envconfig:"ENVIRONMENT" required:"true"`
+	ProjectID     string `envconfig:"PROJECT_ID" required:"true"`
+	Port          int    `envconfig:"PORT" required:"true"`
+	Secret        string `envconfig:"SECRET" required:"true"`
+	AlgoliaAppID  string `envconfig:"ALGOLIA_APP_ID" required:"true"`
+	AlgoliaAPIKey string `envconfig:"ALGOLIA_API_KEY" required:"true"`
 }
 
 func New() (*Config, error) {

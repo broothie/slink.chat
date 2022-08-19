@@ -1,8 +1,10 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/algolia/algoliasearch-client-go/v3/algolia/search"
 	"github.com/broothie/slink.chat/config"
 	"github.com/broothie/slink.chat/db"
 	"github.com/gorilla/sessions"
@@ -15,6 +17,7 @@ type Server struct {
 	sessions *sessions.CookieStore
 	db       *db.DB
 	render   *render.Render
+	algolia  *search.Client
 }
 
 func New(cfg *config.Config) (*Server, error) {
@@ -34,9 +37,18 @@ func New(cfg *config.Config) (*Server, error) {
 			RenderPartialsWithoutPrefix: true,
 			StreamingJSON:               true,
 		}),
+		algolia: search.NewClient(cfg.AlgoliaAppID, cfg.AlgoliaAPIKey),
 	}, nil
 }
 
 func (s *Server) Handler() http.Handler {
 	return s.routes()
+}
+
+func (s *Server) screennamesSearchIndex() *search.Index {
+	return s.algolia.InitIndex(fmt.Sprintf("screennames-%s", s.cfg.Environment))
+}
+
+func (s *Server) channelsSearchIndex() *search.Index {
+	return s.algolia.InitIndex(fmt.Sprintf("channels-%s", s.cfg.Environment))
 }

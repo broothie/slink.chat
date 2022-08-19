@@ -37,7 +37,7 @@ export default function Start() {
 
 	function openCreateChat() {
 		addWindow('CreateChat', { right: 400, top: 50 }, (
-			<CreateChat close={() => removeWindow('CreateChat')}/>
+			<CreateChat close={() => removeWindow('CreateChat')} addChannel={addChannel}/>
 		))
 	}
 

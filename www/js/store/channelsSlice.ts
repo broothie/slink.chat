@@ -1,5 +1,5 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import {Channel} from "../model/model";
+import {Channel, User} from "../model/model";
 import axios from "../axios";
 
 export type ChannelLookup = { [key: string]: Channel }
@@ -21,6 +21,18 @@ export const createChannel = createAsyncThunk(
 	async ({ name, isPrivate }: { name: string, isPrivate: boolean }) => {
 		try {
 			const response = await axios.post('/api/v1/channels', { name, 'private': isPrivate })
+			return response.data.channel as Channel
+		} catch(error) {
+			return null
+		}
+	}
+)
+
+export const createChat = createAsyncThunk(
+	'channels/createChat',
+	async (users: User[]) => {
+		try {
+			const response = await axios.post('/api/v1/chats', users)
 			return response.data.channel as Channel
 		} catch(error) {
 			return null
@@ -50,6 +62,11 @@ const channelsSlice = createSlice({
 		})
 
 		builder.addCase(createChannel.fulfilled, (state, action) => {
+			const channel = action.payload
+			state[channel.channelID] = channel
+		})
+
+		builder.addCase(createChat.fulfilled, (state, action) => {
 			const channel = action.payload
 			state[channel.channelID] = channel
 		})

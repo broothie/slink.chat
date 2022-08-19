@@ -37,11 +37,17 @@ func (s *Server) routes() chi.Router {
 
 				r.Get("/user", s.showCurrentUser)
 
-				r.Route("/users/{user_id}", func(r chi.Router) {
-					r.Use(injectResourceLog("user"))
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/search", s.searchUsers)
 
-					r.Get("/", s.showUser)
+					r.Route("/{user_id}", func(r chi.Router) {
+						r.Use(injectResourceLog("user"))
+
+						r.Get("/", s.showUser)
+					})
 				})
+
+				r.Post("/chats", s.createChat)
 
 				r.Route("/channels", func(r chi.Router) {
 					r.Get("/", s.indexChannels)

@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -66,6 +67,12 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	indexErr := make(chan error)
+	go func() {
+		_, err := s.screennamesSearchIndex().SaveObject(util.Map{"objectID": user.UserID, "screenname": user.Screenname})
+		indexErr <- err
+	}()
+
 	if err := s.createWorldChatSubscription(r.Context(), user.UserID); err != nil {
 		logger.Error("failed to create world chat subscription", zap.Error(err))
 	}
@@ -83,6 +90,10 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		logger.Error("failed to save session", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
+	}
+
+	if err := <-indexErr; err != nil {
+		logger.Error("failed to add screenname to index", zap.Error(err))
 	}
 
 	s.render.JSON(w, http.StatusCreated, util.Map{"user": user})
@@ -111,6 +122,32 @@ func (s *Server) showUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render.JSON(w, http.StatusOK, util.Map{"user": user})
+}
+
+func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		s.render.JSON(w, http.StatusOK, util.Map{"users": []model.User{}})
+		return
+	}
+
+	result, err := s.screennamesSearchIndex().Search(query)
+	if err != nil {
+		logger.Error("failed to search screennames index", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	users := lo.Map(result.Hits, func(hit map[string]any, _ int) model.User {
+		return model.User{
+			UserID:     hit["objectID"].(string),
+			Screenname: hit["screenname"].(string),
+		}
+	})
+
+	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
 }
 
 func (s *Server) createWorldChatSubscription(ctx context.Context, userID string) error {
