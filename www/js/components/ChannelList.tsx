@@ -2,7 +2,7 @@ import * as React from 'react'
 import {useAppDispatch, useAppSelector} from "../hooks";
 import {destroySession} from "../store/userSlice";
 import {useEffect} from "react";
-import {fetchChannels} from "../store/channelsSlice";
+import {destroyChannel, fetchChannels} from "../store/channelsSlice";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
 
@@ -16,6 +16,10 @@ export default function ChannelList({ addChannel, openCreateChannel }: {
 
 	function signOff() {
 		dispatch(destroySession())
+	}
+
+	function removeChannel(channelID) {
+		dispatch(destroyChannel(channelID))
 	}
 
 	useEffect(() => {
@@ -66,9 +70,10 @@ export default function ChannelList({ addChannel, openCreateChannel }: {
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
 									onDoubleClick={() => addChannel(channel.channelID)}
 								>
-									<p className="hover:bg-logo-tile hover:text-white p-0.5 select-none">
-										{channel.name}
-									</p>
+									<div className="hover:bg-logo-tile hover:text-white p-0.5 select-none flex flex-row justify-between">
+										<p>{channel.name}</p>
+										<button className="button px-1 cursor-pointer" onClick={() => removeChannel(channel.channelID)}>-</button>
+									</div>
 								</div>
 							))}
 						</div>
@@ -90,9 +95,10 @@ export default function ChannelList({ addChannel, openCreateChannel }: {
 									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
 									onDoubleClick={() => addChannel(channel.channelID)}
 								>
-									<p className="hover:bg-logo-tile hover:text-white p-0.5 select-none">
-										{channel.name}
-									</p>
+									<div className="hover:bg-logo-tile hover:text-white p-0.5 select-none flex flex-row justify-between">
+										<p>{channel.name}</p>
+										<button className="button px-1 cursor-pointer" onClick={() => removeChannel(channel.channelID)}>-</button>
+									</div>
 								</div>
 							))}
 						</div>

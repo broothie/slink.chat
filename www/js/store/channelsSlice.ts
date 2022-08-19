@@ -28,6 +28,18 @@ export const createChannel = createAsyncThunk(
 	}
 )
 
+export const destroyChannel = createAsyncThunk(
+	'channels/destroyChannel',
+	async (channelID: string) => {
+		try {
+			const response = await axios.delete(`/api/v1/channels/${channelID}`)
+			return response.data.channelID
+		} catch(error) {
+			return null
+		}
+	}
+)
+
 const channelsSlice = createSlice({
 	name: 'channels',
 	initialState: {} as ChannelLookup,
@@ -40,6 +52,11 @@ const channelsSlice = createSlice({
 		builder.addCase(createChannel.fulfilled, (state, action) => {
 			const channel = action.payload
 			state[channel.channelID] = channel
+		})
+
+		builder.addCase(destroyChannel.fulfilled, (state, action) => {
+			const channelID = action.payload
+			delete state[channelID]
 		})
 	}
 })

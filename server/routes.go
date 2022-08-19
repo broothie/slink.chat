@@ -51,6 +51,7 @@ func (s *Server) routes() chi.Router {
 						r.Use(injectResourceLog("channel"))
 
 						r.Get("/", s.showChannel)
+						r.Delete("/", s.destroySubscription)
 
 						r.Route("/subscriptions", func(r chi.Router) {
 							r.Post("/", s.createSubscription)
