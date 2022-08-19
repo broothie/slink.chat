@@ -38,7 +38,7 @@ func (c *Config) IsStaging() bool {
 }
 
 func (c *Config) IsProduction() bool {
-	return c.Environment == "staging"
+	return c.Environment == "production"
 }
 
 func (c *Config) IsLocal() bool {
@@ -46,7 +46,7 @@ func (c *Config) IsLocal() bool {
 }
 
 func (c *Config) IsHosted() bool {
-	return !c.IsLocal()
+	return c.IsStaging() || c.IsProduction()
 }
 
 func (c *Config) Collection(name string) string {
