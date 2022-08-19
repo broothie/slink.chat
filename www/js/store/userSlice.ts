@@ -34,7 +34,7 @@ export const fetchCurrentUser = createAsyncThunk(
 	}
 )
 
-type SliceState = { status: 'not checked', user: null } | { status: 'checking', user: null } | { status: 'checked', user?: User }
+type SliceState = { status: 'not checked', user: null } | { status: 'checking', user: null } | { status: 'missing', user: null } | { status: 'checked', user?: User }
 
 const userSlice = createSlice({
 	name: 'user',
@@ -46,6 +46,7 @@ const userSlice = createSlice({
 		})
 
 		builder.addCase(createSession.fulfilled, (state, action) => {
+			state.status = 'checked'
 			state.user = action.payload
 		})
 
@@ -60,6 +61,10 @@ const userSlice = createSlice({
 		builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
       state.status = 'checked'
       state.user = action.payload
+		})
+
+		builder.addCase(fetchCurrentUser.rejected, (state, action) => {
+			state.status = 'missing'
 		})
 	}
 })

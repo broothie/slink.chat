@@ -18,12 +18,9 @@ export default function RequireUser({children}) {
 		case "not checked":
 		case "checking":
 			return <div></div>
-
+		case "missing":
+			return <Navigate to="/signon" />
 		case "checked":
-			if (!userState.user) {
-				return <Navigate to="/signon" />
-			} else {
-				return children
-			}
+			return children
 	}
 }

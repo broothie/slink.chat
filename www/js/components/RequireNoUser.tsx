@@ -18,12 +18,10 @@ export default function RequireNoUser({children}) {
 		case "not checked":
 		case "checking":
 			return <div></div>
+		case "missing":
+			return children
 
 		case "checked":
-			if (userState.user) {
-				return <Navigate to="/" />
-			} else {
-				return children
-			}
+			return <Navigate to="/" />
 	}
 }
