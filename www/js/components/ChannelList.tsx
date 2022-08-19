@@ -5,6 +5,7 @@ import {useEffect} from "react";
 import {destroyChannel, fetchChannels} from "../store/channelsSlice";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
+import {playDoorOpen, playDoorSlam} from "../audio";
 
 export default function ChannelList({ addChannel, openCreateChannel, openCreateChat }: {
 	addChannel: { (channelID: string) },
@@ -17,6 +18,8 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 
 	function signOff() {
 		dispatch(destroySession())
+			.unwrap()
+			.then(playDoorSlam)
 	}
 
 	function removeChannel(channelID) {

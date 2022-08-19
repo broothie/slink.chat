@@ -7,6 +7,7 @@ import classNames from "classnames";
 import {UserLookup} from "../store/usersSlice";
 import axios from "../axios";
 import TitleBar from "./TitleBar";
+import {playMessageReceive, playMessageSend} from "../audio";
 
 type CloseFunction = { (): void }
 
@@ -37,10 +38,13 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 	function sendMessage() {
 		axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
 			.then(() => setMessage(''))
+			.then(playMessageSend)
 	}
 
 	function addMessage(message: Message) {
 		setMessages(messages => _.sortBy(messages.concat([message]), 'createdAt'))
+
+		if (message.userID !== user.userID) playMessageReceive().catch(console.error)
 
 		if (!users[message.userID]) {
 			const userID = message.userID

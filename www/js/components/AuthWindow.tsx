@@ -2,6 +2,7 @@ import * as React from "react";
 import {useRef, useState} from "react";
 import {Link} from "react-router-dom";
 import TitleBar from "./TitleBar";
+import {playDoorOpen} from "../audio";
 
 type Submit = { (screenname: string, password: string) }
 
