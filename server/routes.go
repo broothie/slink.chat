@@ -58,6 +58,7 @@ func (s *Server) routes() chi.Router {
 				r.Route("/channels", func(r chi.Router) {
 					r.Get("/", s.indexChannels)
 					r.Post("/", s.createChannel)
+					r.Get("/search", s.searchChannels)
 
 					r.Route("/{channel_id}", func(r chi.Router) {
 						r.Use(injectResourceIDLog("channel"))

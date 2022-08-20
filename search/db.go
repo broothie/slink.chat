@@ -29,7 +29,8 @@ func (db *DB) SearchUsers(query string) ([]model.User, error) {
 		return nil, errors.Wrap(err, "failed to fetch users")
 	}
 
-	return lo.Filter(users, func(user model.User, _ int) bool { return strings.HasPrefix(user.Screenname, query) }), nil
+	query = strings.ToLower(query)
+	return lo.Filter(users, func(user model.User, _ int) bool { return strings.HasPrefix(strings.ToLower(user.Screenname), query) }), nil
 }
 
 func (db *DB) IndexChannel(user model.Channel) error {
@@ -42,5 +43,8 @@ func (db *DB) SearchChannels(query string) ([]model.Channel, error) {
 		return nil, errors.Wrap(err, "failed to fetch channels")
 	}
 
-	return lo.Filter(channels, func(channel model.Channel, _ int) bool { return strings.HasPrefix(channel.Name, query) }), nil
+	query = strings.ToLower(query)
+	return lo.Filter(channels, func(channel model.Channel, _ int) bool {
+		return strings.HasPrefix(strings.ToLower(channel.Name), query)
+	}), nil
 }

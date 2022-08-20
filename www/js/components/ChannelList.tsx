@@ -7,10 +7,11 @@ import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
 import { playDoorSlam } from "../audio";
 
-export default function ChannelList({ addChannel, openCreateChannel, openCreateChat }: {
+export default function ChannelList({ addChannel, openCreateChannel, openCreateChat, openSearchChannels }: {
 	addChannel: { (channelID: string) },
 	openCreateChannel: { () },
 	openCreateChat: { () },
+	openSearchChannels: { () },
 }) {
 	const dispatch = useAppDispatch()
 	const user = useAppSelector(state => state.user.user)
@@ -91,7 +92,8 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 						<div className="p-1 border-b border-black flex flex-row justify-between">
 							<p>Channels</p>
 
-							<div>
+							<div className="space-x-1">
+								<a className="link" onClick={openSearchChannels}>Search</a>
 								<a className="link" onClick={openCreateChannel}>Create</a>
 							</div>
 						</div>

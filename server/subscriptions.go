@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -17,13 +16,6 @@ import (
 func (s *Server) createSubscription(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	var params model.Subscription
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		logger.Error("failed to decode subscription json", zap.Error(err))
-		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
-		return
-	}
-
 	user, _ := model.UserFromContext(r.Context())
 	now := time.Now()
 	subscription := model.Subscription{
@@ -32,7 +24,7 @@ func (s *Server) createSubscription(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:      now,
 		UpdatedAt:      now,
 		UserID:         user.UserID,
-		ChannelID:      params.ChannelID,
+		ChannelID:      chi.URLParam(r, "channel_id"),
 	}
 
 	if _, err := s.db.Collection().Doc(subscription.SubscriptionID).Create(r.Context(), subscription); err != nil {

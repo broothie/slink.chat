@@ -4,6 +4,12 @@ export type User = {
 	screenname: string,
 }
 
+export type Subscription = {
+	subscriptionID: string,
+	userID: string
+	channelID: string
+}
+
 export type Channel = {
 	channelID: string,
 	name: string,

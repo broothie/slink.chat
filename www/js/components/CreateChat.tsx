@@ -35,10 +35,7 @@ export default function CreateChat({ addChannel, close }: {
 	}
 
 	const throttledSearchUsers = useMemo(() => _.throttle(searchUsers, 100), [])
-
-	useEffect(() => {
-		throttledSearchUsers(query)
-	}, [query])
+	useEffect(() => { throttledSearchUsers(query) }, [query])
 
 	return (
 		<div className="window flex flex-col w-80 p-1">
@@ -60,9 +57,9 @@ export default function CreateChat({ addChannel, close }: {
 					<button className="button px-1">Add</button>
 				</div>
 
-				<div className="flex flex-col inset h-52 overflow-y-auto bg-white">
+				<div className="flex flex-col inset h-52 overflow-y-auto bg-white text-sm">
 					{_.reject(users, user => _.includes(_.keys(addedUsers), user.userID)).map(user => (
-						<div key={user.userID} className="flex flex-row justify-between p-1">
+						<div key={user.userID} className="flex flex-row justify-between p-1 hover:bg-logo-tile hover:text-white">
 							<p>{user.screenname}</p>
 							<button
 								className="button px-2"
@@ -76,9 +73,9 @@ export default function CreateChat({ addChannel, close }: {
 
 				<div className="hr my-1"></div>
 
-				<div className="flex flex-col inset h-52 overflow-y-auto bg-white">
+				<div className="flex flex-col inset h-52 overflow-y-auto bg-white text-sm">
 					{_.map(addedUsers, user => (
-						<div key={user.userID} className="flex flex-row justify-between p-1">
+						<div key={user.userID} className="flex flex-row justify-between p-1 hover:bg-logo-tile hover:text-white">
 							<p>{user.screenname}</p>
 							<button
 								className="button px-2"

@@ -1,10 +1,11 @@
 import * as React from "react";
 import ChannelList from "./ChannelList";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import Chat from "./Chat";
 import * as _ from "lodash";
 import CreateChannel from "./CreateChannel";
 import CreateChat from "./CreateChat";
+import SearchChannels from "./SearchChannels";
 
 export default function Start() {
 	const [windowIDs, setWindowIDs] = useState([])
@@ -31,19 +32,25 @@ export default function Start() {
 
 	function addChannel(channelID: string) {
 		addWindow(channelID, { left: 50, top: 50 }, (
-			<Chat channelID={channelID} close={() => removeWindow(channelID)}/>
+			<Chat channelID={channelID} close={() => removeWindow(channelID)} />
 		))
 	}
 
 	function openCreateChat() {
 		addWindow('CreateChat', { right: 400, top: 50 }, (
-			<CreateChat close={() => removeWindow('CreateChat')} addChannel={addChannel}/>
+			<CreateChat close={() => removeWindow('CreateChat')} addChannel={addChannel} />
 		))
 	}
 
 	function openCreateChannel() {
 		addWindow('CreateChannel', { right: 400, top: 50 }, (
-			<CreateChannel close={() => removeWindow('CreateChannel')} addChannel={addChannel}/>
+			<CreateChannel close={() => removeWindow('CreateChannel')} addChannel={addChannel} />
+		))
+	}
+
+	function openSearchChannels() {
+		addWindow('SearchChannels', { right: 400, top: 50 }, (
+			<SearchChannels close={() => removeWindow('SearchChannels')} addChannel={addChannel} />
 		))
 	}
 
@@ -53,6 +60,7 @@ export default function Start() {
 				addChannel={addChannel}
 				openCreateChannel={openCreateChannel}
 				openCreateChat={openCreateChat}
+				openSearchChannels={openSearchChannels}
 			/>
 		))
 	}, [])

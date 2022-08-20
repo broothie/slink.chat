@@ -1,5 +1,5 @@
-import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import {Channel, User} from "../model/model";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { Channel, Subscription, User } from "../model/model";
 import axios from "../axios";
 
 export type ChannelLookup = { [key: string]: Channel }

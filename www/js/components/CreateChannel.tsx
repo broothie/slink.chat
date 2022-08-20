@@ -1,10 +1,10 @@
 import * as React from 'react'
-import TitleBar, {CloseFunction} from "./TitleBar";
-import {useRef, useState} from "react";
-import {useAppDispatch} from "../hooks";
-import {createChannel} from "../store/channelsSlice";
+import TitleBar, { CloseFunction } from "./TitleBar";
+import { useRef, useState } from "react";
+import { useAppDispatch } from "../hooks";
+import { createChannel } from "../store/channelsSlice";
 
-export default function CreateChannel({addChannel, close}: {
+export default function CreateChannel({ addChannel, close }: {
 	addChannel: { (channelID: string) },
 	close: CloseFunction,
 }) {
@@ -16,21 +16,23 @@ export default function CreateChannel({addChannel, close}: {
 	function create(event) {
 		event.preventDefault()
 
-		const form = formRef.current as HTMLFormElement
-		if (form?.checkValidity()) {
-			dispatch(createChannel({ name, isPrivate: false }))
-				.unwrap()
-				.then(channel => {
-					addChannel(channel.channelID)
-					close()
-				})
+		if (formRef.current !== undefined) {
+			const form = formRef.current as HTMLFormElement
+			if (form?.checkValidity()) {
+				dispatch(createChannel({ name, isPrivate: false }))
+					.unwrap()
+					.then(channel => {
+						addChannel(channel.channelID)
+						close()
+					})
+			}
 		}
 	}
 
 	return (
 		<div className="window w-72 p-1">
 			<div className="draggable-handle">
-				<TitleBar title="Create Channel" close={close}/>
+				<TitleBar title="Create Channel" close={close} />
 			</div>
 
 			<form ref={formRef} className="font-sans p-2 flex flex-row space-x-1" onSubmit={create}>

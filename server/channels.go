@@ -214,6 +214,25 @@ func (s *Server) showChannel(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusOK, util.Map{"channel": channel, "messages": messages, "users": users})
 }
 
+func (s *Server) searchChannels(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		s.render.JSON(w, http.StatusOK, util.Map{"channels": []model.Channel{}})
+		return
+	}
+
+	channels, err := s.search.SearchChannels(query)
+	if err != nil {
+		logger.Error("failed to search channels", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	s.render.JSON(w, http.StatusOK, util.Map{"channels": channels})
+}
+
 func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
