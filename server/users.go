@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -67,10 +66,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	indexErr := make(chan error)
-	go func() {
-		_, err := s.screennamesSearchIndex().SaveObject(util.Map{"objectID": user.UserID, "screenname": user.Screenname})
-		indexErr <- err
-	}()
+	go func() { indexErr <- s.search.IndexUser(user) }()
 
 	if err := s.createWorldChatSubscription(r.Context(), user.UserID); err != nil {
 		logger.Error("failed to create world chat subscription", zap.Error(err))
@@ -132,19 +128,12 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.screennamesSearchIndex().Search(query)
+	users, err := s.search.SearchUsers(query)
 	if err != nil {
 		logger.Error("failed to search screennames index", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
-
-	users := lo.Map(result.Hits, func(hit map[string]any, _ int) model.User {
-		return model.User{
-			UserID:     hit["objectID"].(string),
-			Screenname: hit["screenname"].(string),
-		}
-	})
 
 	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
 }

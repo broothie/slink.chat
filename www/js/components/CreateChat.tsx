@@ -1,12 +1,12 @@
 import * as React from 'react'
 import TitleBar from "./TitleBar";
-import {useEffect, useMemo, useState} from "react";
-import {User} from "../model/model";
+import { useEffect, useMemo, useState } from "react";
+import { User } from "../model/model";
 import * as _ from "lodash";
 import axios from "../axios";
-import {UserLookup} from "../store/usersSlice";
-import {useAppDispatch} from "../hooks";
-import {createChat} from "../store/channelsSlice";
+import { UserLookup } from "../store/usersSlice";
+import { useAppDispatch } from "../hooks";
+import { createChat } from "../store/channelsSlice";
 
 export default function CreateChat({ addChannel, close }: {
 	addChannel: { (channelID: string) },
@@ -42,7 +42,9 @@ export default function CreateChat({ addChannel, close }: {
 
 	return (
 		<div className="window flex flex-col w-80 p-1">
-			<TitleBar title="Create Chat" close={close}/>
+			<div className="draggable-handle">
+				<TitleBar title="Create Chat" close={close} />
+			</div>
 
 			<div className="flex flex-col p-1 font-sans space-y-1">
 				<div className="flex flex-row space-x-1">

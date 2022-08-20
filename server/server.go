@@ -1,12 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/algolia/algoliasearch-client-go/v3/algolia/search"
 	"github.com/broothie/slink.chat/config"
 	"github.com/broothie/slink.chat/db"
+	"github.com/broothie/slink.chat/search"
 	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 	"github.com/unrolled/render"
@@ -17,19 +16,24 @@ type Server struct {
 	sessions *sessions.CookieStore
 	db       *db.DB
 	render   *render.Render
-	algolia  *search.Client
+	search   search.Search
 }
 
 func New(cfg *config.Config) (*Server, error) {
-	client, err := db.New(cfg)
+	db, err := db.New(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new db")
+	}
+
+	var srch search.Search = search.NewAlgolia(cfg)
+	if cfg.IsLocal() {
+		srch = search.NewDB(db)
 	}
 
 	return &Server{
 		cfg:      cfg,
 		sessions: sessions.NewCookieStore([]byte(cfg.Secret)),
-		db:       client,
+		db:       db,
 		render: render.New(render.Options{
 			IndentJSON:                  cfg.IsLocal(),
 			IsDevelopment:               cfg.IsLocal(),
@@ -37,18 +41,10 @@ func New(cfg *config.Config) (*Server, error) {
 			RenderPartialsWithoutPrefix: true,
 			StreamingJSON:               true,
 		}),
-		algolia: search.NewClient(cfg.AlgoliaAppID, cfg.AlgoliaAPIKey),
+		search: srch,
 	}, nil
 }
 
 func (s *Server) Handler() http.Handler {
 	return s.routes()
-}
-
-func (s *Server) screennamesSearchIndex() *search.Index {
-	return s.algolia.InitIndex(fmt.Sprintf("screennames-%s", s.cfg.Environment))
-}
-
-func (s *Server) channelsSearchIndex() *search.Index {
-	return s.algolia.InitIndex(fmt.Sprintf("channels-%s", s.cfg.Environment))
 }

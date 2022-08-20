@@ -61,7 +61,7 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !channel.Private {
-		if _, err := s.channelsSearchIndex().SaveObject(util.Map{"objectID": channel.ChannelID, "name": channel.Name}); err != nil {
+		if err := s.search.IndexChannel(channel); err != nil {
 			logger.Error("failed to update channel search index", zap.Error(err))
 		}
 	}
