@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -69,7 +70,7 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	s.render.JSON(w, http.StatusCreated, util.Map{"channel": channel})
 }
 
-func (s *Server) createChat(w http.ResponseWriter, r *http.Request) {
+func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	var users []model.User
@@ -84,7 +85,16 @@ func (s *Server) createChat(w http.ResponseWriter, r *http.Request) {
 		users = append(users, user)
 	}
 
+	sort.Slice(users, func(i, j int) bool { return users[i].UserID < users[j].UserID })
 	name := strings.Join(lo.Map(users, func(user model.User, _ int) string { return user.Screenname }), ", ")
+	if channel, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("name", "==", name)
+	}); err == nil {
+		logger.Info("chat already exists")
+		s.render.JSON(w, http.StatusOK, util.Map{"channel": channel})
+		return
+	}
+
 	now := time.Now()
 	channel := model.Channel{
 		ChannelID: model.TypeChannel.NewID(),

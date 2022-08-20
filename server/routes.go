@@ -53,7 +53,7 @@ func (s *Server) routes() chi.Router {
 			r.Group(func(r chi.Router) {
 				r.Use(s.requireUser)
 
-				r.Post("/chats", s.createChat)
+				r.Post("/chats", s.upsertChat)
 
 				r.Route("/channels", func(r chi.Router) {
 					r.Get("/", s.indexChannels)
