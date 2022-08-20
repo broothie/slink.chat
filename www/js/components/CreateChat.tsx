@@ -19,7 +19,7 @@ export default function CreateChat({ addChannel, close }: {
 	const dispatch = useAppDispatch()
 
 	function create() {
-		dispatch(createChat(_.values(addedUsers)))
+		dispatch(createChat(_.keys(addedUsers)))
 			.unwrap()
 			.then(channel => {
 				addChannel(channel.channelID)

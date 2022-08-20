@@ -32,7 +32,7 @@ export default function Start() {
 
 	function addChannel(channelID: string) {
 		addWindow(channelID, { left: 50, top: 50 }, (
-			<Chat channelID={channelID} close={() => removeWindow(channelID)} />
+			<Chat channelID={channelID} close={() => removeWindow(channelID)} addChannel={addChannel} />
 		))
 	}
 

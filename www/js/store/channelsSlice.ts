@@ -22,8 +22,8 @@ export const createChannel = createAsyncThunk(
 
 export const createChat = createAsyncThunk(
 	'channels/createChat',
-	async (users: User[]) => {
-		const response = await axios.post('/api/v1/chats', users)
+	async (userIDs: string[]) => {
+		const response = await axios.post('/api/v1/chats', userIDs)
 		return response.data.channel as Channel
 	}
 )

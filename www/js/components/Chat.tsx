@@ -1,13 +1,14 @@
 import * as React from 'react'
 import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
-import {useAppSelector} from "../hooks";
+import {useAppDispatch, useAppSelector} from "../hooks";
 import {Channel, Message, User} from "../model/model";
 import classNames from "classnames";
 import {UserLookup} from "../store/usersSlice";
 import axios from "../axios";
 import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
+import {createChat} from "../store/channelsSlice";
 
 type CloseFunction = { (): void }
 
@@ -19,16 +20,30 @@ type ChannelResponse = {
 	users: UserLookup,
 }
 
-export default function Chat({ channelID, close }: { channelID: string, close: CloseFunction }) {
+export default function Chat({ channelID, close, addChannel }: {
+	channelID: string,
+	addChannel: { (channelID: string) }
+	close: CloseFunction,
+}) {
 	const user = useAppSelector(state => state.user.user)
 	const windowRef = useRef()
+	const dispatch = useAppDispatch()
 
 	const [message, setMessage] = useState('')
 	const [channel, setChannel] = useState(null as Channel)
 	const [messages, setMessages] = useState([] as Message[])
 	const [users, setUsers] = useState({} as UserLookup)
 
-	function textareaOnChange(event) {
+	function onScreennameClick(userID: string) {
+		dispatch(createChat([user.userID, userID]))
+			.unwrap()
+			.then(channel => {
+				addChannel(channel.channelID)
+				close()
+			})
+	}
+
+	function onTextareaChange(event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault()
 			sendMessage()
@@ -116,17 +131,27 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 					className="bg-white inset w-80 h-52 font-serif text-sm p-1 overflow-y-auto whitespace-pre-wrap"
 					ref={windowRef}
 				>
-					{messages.map(message => (
-						<p key={message.messageID}>
-							<span className={classNames({
-								'text-indigo-700': message.userID === user.userID,
-								'text-red-500': message.userID !== user.userID,
-							})}>
-								{users[message.userID]?.screenname}:
-							</span>
-							<span> {message.body}</span>
-						</p>
-					))}
+					{messages.map(message => {
+						if (message.userID === user.userID) {
+							return (
+								<p key={message.messageID}>
+									<span className="text-indigo-700">
+										{users[message.userID]?.screenname}:
+									</span>
+									<span> {message.body}</span>
+								</p>
+							)
+						} else {
+							return (
+								<p key={message.messageID}>
+									<a className="text-red-500 cursor-pointer" onClick={() => onScreennameClick(message.userID)}>
+										{users[message.userID]?.screenname}:
+									</a>
+									<span> {message.body}</span>
+								</p>
+							)
+						}
+					})}
 				</div>
 
 				<div className="hr my-0.5"></div>
@@ -140,7 +165,7 @@ export default function Chat({ channelID, close }: { channelID: string, close: C
 						autoFocus={true}
 						value={message}
 						onChange={e => setMessage(e.target.value)}
-						onKeyDown={textareaOnChange}
+						onKeyDown={onTextareaChange}
 					></textarea>
 
 					<div className="flex flex-row justify-end pb-2">

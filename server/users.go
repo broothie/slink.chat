@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"github.com/samber/lo"
 	"net/http"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -135,6 +137,9 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, _ := model.UserFromContext(r.Context())
+	users = lo.Reject(users, func(u model.User, _ int) bool { return u.UserID == user.UserID })
+	sort.Slice(users, func(i, j int) bool { return users[i].UserID < users[j].UserID })
 	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
 }
 

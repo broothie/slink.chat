@@ -73,10 +73,17 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	var users []model.User
-	if err := json.NewDecoder(r.Body).Decode(&users); err != nil {
-		logger.Error("failed to decode users", zap.Error(err))
+	var userIDs []string
+	if err := json.NewDecoder(r.Body).Decode(&userIDs); err != nil {
+		logger.Error("failed to decode user ids", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+		return
+	}
+
+	users, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), userIDs...)
+	if err != nil {
+		logger.Error("failed to fetch users", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	}
 
