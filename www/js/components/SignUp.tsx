@@ -1,8 +1,8 @@
 import * as React from "react";
-import {useAppDispatch} from "../hooks";
-import {createUser} from "../store/userSlice";
+import { useAppDispatch } from "../hooks";
+import { createUser } from "../store/userSlice";
 import AuthWindow from "./AuthWindow";
-import {playDoorOpen} from "../audio";
+import { playDoorOpen } from "../audio";
 
 export default function SignUp() {
 	const dispatch = useAppDispatch()
@@ -13,5 +13,5 @@ export default function SignUp() {
 			.then(playDoorOpen)
 	}
 
-	return <AuthWindow title="Sign Up" swapText="Sign On" swapLink="/signon" submit={signUp}/>
+	return <AuthWindow title="Sign Up" swapText="Sign On" swapLink="/signon" submit={signUp} />
 }

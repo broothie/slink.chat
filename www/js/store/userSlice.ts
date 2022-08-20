@@ -34,7 +34,9 @@ export const fetchCurrentUser = createAsyncThunk(
 	}
 )
 
-type SliceState = { status: 'not checked', user: null } | { status: 'checking', user: null } | { status: 'checked', user?: User }
+type SliceState = { status: 'not checked', user: null }
+	| { status: 'checking', user: null }
+	| { status: 'checked', user?: User }
 
 const userSlice = createSlice({
 	name: 'user',

@@ -16,7 +16,7 @@ export default function CreateChannel({ addChannel, close }: {
 	function create(event) {
 		event.preventDefault()
 
-		if (formRef.current !== undefined) {
+		if (!!formRef.current) {
 			const form = formRef.current as HTMLFormElement
 			if (form?.checkValidity()) {
 				dispatch(createChannel({ name, isPrivate: false }))

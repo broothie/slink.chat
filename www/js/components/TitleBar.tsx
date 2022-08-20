@@ -9,7 +9,7 @@ export default function TitleBar({ title, close }: { title: string, close?: Clos
 
 			{!!close && (
 				<button className="button p-0.5" onClick={close}>
-					<img src="/static/x.png" alt="close button" className="h-3 w-3.5 object-scale-down"/>
+					<img src="/static/img/x.png" alt="close button" className="h-3 w-3.5 object-scale-down" />
 				</button>
 			)}
 		</div>

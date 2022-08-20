@@ -34,7 +34,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 	const privateChannels = _.filter(channels, 'private')
 	const publicChannels = _.reject(channels, 'private')
 
-	return (
+	return user && (
 		<div className="window p-1 flex flex-col w-fit" style={{ height: 800 }}>
 			<div className="draggable-handle">
 				<TitleBar title="Channel List" close={signOff} />
@@ -50,7 +50,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 
 				<div className="bg-logo-tile flex flex-row items-center py-3 px-10 space-x-2">
 					<div className="">
-						<img src="/static/logo.png" alt="Slink logo" className="w-24 h-auto" />
+						<img src="/static/img/logo.png" alt="Slink logo" className="w-24 h-auto" />
 					</div>
 
 					<p className="flex flex-col leading-tight">

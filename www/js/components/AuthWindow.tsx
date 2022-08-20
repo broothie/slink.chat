@@ -19,9 +19,15 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 	function submitForm(event) {
 		event.preventDefault()
 
-		if (formRef.current !== undefined) {
+		if (!!formRef.current) {
 			const form = formRef.current as HTMLFormElement
-			if (form?.checkValidity()) submit(screenname, password)
+			if (form?.checkValidity()) {
+				try {
+					submit(screenname, password)
+				} catch (error) {
+					console.error('error!!!', error)
+				}
+			}
 		}
 	}
 
@@ -34,7 +40,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 			<div className="px-2 py-1 font-sans">
 				<div className="bg-logo-tile flex flex-col items-center p-2">
 					<div className="p-5">
-						<img src="/static/logo.png" alt="Slink logo" className="w-48 h-auto" />
+						<img src="/static/img/logo.png" alt="Slink logo" className="w-48 h-auto" />
 					</div>
 					<p className="text-xl font-bold text-white">Slink Instant Messenger</p>
 					<p className="text-xs text-white">Inspired by AIM and Windows 95</p>
