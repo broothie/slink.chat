@@ -1,5 +1,5 @@
-import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import {User} from "../model/model";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { User } from "../model/model";
 import axios from "../axios";
 
 export const createUser = createAsyncThunk(
@@ -34,15 +34,20 @@ export const fetchCurrentUser = createAsyncThunk(
 	}
 )
 
-type SliceState = { status: 'not checked', user: null } | { status: 'checking', user: null } | { status: 'missing', user: null } | { status: 'checked', user?: User }
+type SliceState = { status: 'not checked', user: null } | { status: 'checking', user: null } | { status: 'checked', user?: User }
 
 const userSlice = createSlice({
 	name: 'user',
-	initialState: {status: 'not checked'} as SliceState,
+	initialState: { status: 'not checked' } as SliceState,
 	reducers: {},
 	extraReducers: builder => {
 		builder.addCase(createUser.fulfilled, (state, action) => {
 			state.user = action.payload
+			state.status = 'checked'
+		})
+
+		builder.addCase(createUser.rejected, (state, action) => {
+			state.status = 'checked'
 		})
 
 		builder.addCase(createSession.fulfilled, (state, action) => {
@@ -55,16 +60,16 @@ const userSlice = createSlice({
 		})
 
 		builder.addCase(fetchCurrentUser.pending, (state, action) => {
-      state.status = 'checking'
+			state.status = 'checking'
 		})
 
 		builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
-      state.status = 'checked'
-      state.user = action.payload
+			state.status = 'checked'
+			state.user = action.payload
 		})
 
 		builder.addCase(fetchCurrentUser.rejected, (state, action) => {
-			state.status = 'missing'
+			state.status = 'checked'
 		})
 	}
 })

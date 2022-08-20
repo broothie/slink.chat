@@ -1,11 +1,11 @@
 import * as React from 'react'
-import {useAppDispatch, useAppSelector} from "../hooks";
-import {destroySession} from "../store/userSlice";
-import {useEffect} from "react";
-import {destroyChannel, fetchChannels} from "../store/channelsSlice";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { destroySession } from "../store/userSlice";
+import { useEffect } from "react";
+import { destroyChannel, fetchChannels } from "../store/channelsSlice";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
-import {playDoorOpen, playDoorSlam} from "../audio";
+import { playDoorSlam } from "../audio";
 
 export default function ChannelList({ addChannel, openCreateChannel, openCreateChat }: {
 	addChannel: { (channelID: string) },
@@ -36,7 +36,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 	return (
 		<div className="window p-1 flex flex-col w-fit" style={{ height: 800 }}>
 			<div className="draggable-handle">
-				<TitleBar title="Channel List" close={signOff}/>
+				<TitleBar title="Channel List" close={signOff} />
 			</div>
 
 			<div className="px-2 py-1 font-sans flex-grow flex flex-col">
@@ -49,7 +49,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 
 				<div className="bg-logo-tile flex flex-row items-center py-3 px-10 space-x-2">
 					<div className="">
-						<img src="/static/logo.png" alt="Slink logo" className="w-24 h-auto"/>
+						<img src="/static/logo.png" alt="Slink logo" className="w-24 h-auto" />
 					</div>
 
 					<p className="flex flex-col leading-tight">

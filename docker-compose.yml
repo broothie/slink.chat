@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  firestore:
+    image: mtlynch/firestore-emulator
+    environment:
+      FIRESTORE_PROJECT_ID: whenster
+      PORT: 8200
+    ports: ['8200:8200']

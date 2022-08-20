@@ -8,6 +8,7 @@
     "scripts": "jq .scripts package.json",
     "server": "go run cmd/server/main.go",
     "server:watch": "gin -i -d cmd/server --notifications",
+    "init": "go run cmd/init/main.go",
     "js": "go run cmd/bundle/main.go --production",
     "js:watch": "go run cmd/bundle/main.go --watch",
     "css": "tailwindcss -c config/tailwind.config.js --postcss config/postcss.config.js -i www/css/style.css -o static/style.css --minify",

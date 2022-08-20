@@ -25,19 +25,21 @@ func (s *Server) routes() chi.Router {
 		r.Use(middleware.Logger)
 
 		r.Route("/v1", func(r chi.Router) {
-			r.Post("/users", s.createUser)
-
 			r.Route("/session", func(r chi.Router) {
 				r.Post("/", s.createSession)
 				r.Delete("/", s.destroySession)
 			})
 
-			r.Group(func(r chi.Router) {
-				r.Use(s.requireUser)
+			r.Route("/user", func(r chi.Router) {
+				r.With(s.requireUser).Get("/", s.showCurrentUser)
+			})
 
-				r.Get("/user", s.showCurrentUser)
+			r.Route("/users", func(r chi.Router) {
+				r.Post("/", s.createUser)
 
-				r.Route("/users", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(s.requireUser)
+
 					r.Get("/search", s.searchUsers)
 
 					r.Route("/{user_id}", func(r chi.Router) {
@@ -46,6 +48,10 @@ func (s *Server) routes() chi.Router {
 						r.Get("/", s.showUser)
 					})
 				})
+			})
+
+			r.Group(func(r chi.Router) {
+				r.Use(s.requireUser)
 
 				r.Post("/chats", s.createChat)
 
