@@ -47,8 +47,8 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 
 	channelID := chi.URLParam(r, "channel_id")
 	user, _ := model.UserFromContext(r.Context())
-	if _, err := db.NewFetcher[model.Subscription](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
-		return query.Where("user_id", "==", user.UserID).Where("channel_id", "==", channelID)
+	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+		return query.Where("user_ids", "array-contains", user.UserID)
 	}); err != nil {
 		if err == db.NotFound {
 			logger.Info("user not in channel")

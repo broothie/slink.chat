@@ -16,7 +16,7 @@ export default function SearchChannels({ addChannel, close }: {
   const dispatch = useAppDispatch()
 
   function channelClicked(channelID: string) {
-    axios.post(`/api/v1/channels/${channelID}/subscriptions`)
+    axios.post(`/api/v1/channels/${channelID}/join`)
       .then(() => {
         dispatch(fetchChannels())
         addChannel(channelID)
@@ -49,7 +49,7 @@ export default function SearchChannels({ addChannel, close }: {
           />
         </div>
 
-        <div className="hr"></div>
+        <div className="hr"/>
 
         <div className="bg-white inset p-1 text-sm h-52">
           {channels.map(channel => (

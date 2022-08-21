@@ -60,7 +60,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 					</p>
 				</div>
 
-				<div className="hr my-0.5"></div>
+				<div className="hr my-0.5"/>
 
 				<div className="bg-white inset px-2 py-1 text-sm flex-grow">
 					<div>

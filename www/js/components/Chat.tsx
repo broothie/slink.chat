@@ -2,48 +2,28 @@ import * as React from 'react'
 import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
 import {useAppDispatch, useAppSelector} from "../hooks";
-import {Channel, Message, User} from "../model/model";
-import classNames from "classnames";
-import {UserLookup} from "../store/usersSlice";
+import {Message} from "../model/model";
+import {fetchUser, fetchUsers, UserLookup} from "../store/usersSlice";
 import axios from "../axios";
 import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
-import {createChat} from "../store/channelsSlice";
-
-type CloseFunction = { (): void }
-
-type MessageLookup = { [key: string]: Message }
-
-type ChannelResponse = {
-	channel: Channel,
-	messages: MessageLookup,
-	users: UserLookup,
-}
+import {createChat, fetchChannel} from "../store/channelsSlice";
+import {fetchMessages, receiveMessage} from "../store/messagesSlice";
 
 export default function Chat({ channelID, close, addChannel }: {
 	channelID: string,
 	addChannel: { (channelID: string) }
-	close: CloseFunction,
+	close: { () },
 }) {
 	const user = useAppSelector(state => state.user.user)
+	const channel = useAppSelector(state => state.channels[channelID])
+	const messages = useAppSelector(state => _.filter(state.messages, message => message.channelID === channelID))
 	const windowRef = useRef()
 	const dispatch = useAppDispatch()
 
 	const [message, setMessage] = useState('')
-	const [channel, setChannel] = useState(null as Channel)
-	const [messages, setMessages] = useState([] as Message[])
-	const [users, setUsers] = useState({} as UserLookup)
 
-	function onScreennameClick(userID: string) {
-		dispatch(createChat([user.userID, userID]))
-			.unwrap()
-			.then(channel => {
-				addChannel(channel.channelID)
-				close()
-			})
-	}
-
-	function onTextareaChange(event) {
+	function onTextareaKeyDown(event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault()
 			sendMessage()
@@ -52,24 +32,28 @@ export default function Chat({ channelID, close, addChannel }: {
 
 	function sendMessage() {
 		axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
-			.then(() => setMessage(''))
 			.then(playMessageSend)
+			.then(() => setMessage(''))
 	}
 
 	function addMessage(message: Message) {
-		setMessages(messages => _.sortBy(messages.concat([message]), 'createdAt'))
-
+		dispatch(receiveMessage(message))
 		if (message.userID !== user.userID) playMessageReceive().catch(console.error)
-
-		if (!users[message.userID]) {
-			const userID = message.userID
-
-			axios.get(`/api/v1/users/${userID}`)
-				.then(({ data }: { data: { user: User } }) => {
-					setUsers(users => _.merge({}, users, { [userID]: data.user }))
-				})
-		}
 	}
+
+	useEffect(() => { dispatch(fetchChannel(channelID)) }, [])
+	useEffect(() => {
+		dispatch(fetchMessages(channelID))
+			.unwrap()
+			.then(messages => { dispatch(fetchUsers(_.map(messages, 'userID'))) })
+	}, [])
+
+	useEffect(() => {
+		if (!!windowRef.current) {
+			const window = windowRef.current as HTMLElement
+			window?.scrollTo(0, window?.scrollHeight)
+		}
+	}, [messages])
 
 	let closedByClient = false
 	let socket
@@ -92,23 +76,6 @@ export default function Chat({ channelID, close, addChannel }: {
 	}
 
 	useEffect(() => {
-		if (!!windowRef.current) {
-			const window = windowRef.current as HTMLElement
-			window?.scrollTo(0, window?.scrollHeight)
-		}
-	}, [messages])
-
-	useEffect(() => {
-		axios.get(`/api/v1/channels/${channelID}`)
-			.then(({data}: { data: ChannelResponse } ) => {
-				setChannel(data.channel)
-				setMessages(_.sortBy(data.messages, 'createdAt'))
-				setUsers(data.users)
-			})
-			.catch(console.error)
-	}, [])
-
-	useEffect(() => {
 		startSocket()
 
 		return () => {
@@ -124,37 +91,19 @@ export default function Chat({ channelID, close, addChannel }: {
 				<TitleBar title={`${channel.name} - Instant Message`} close={close}/>
 			</div>
 
-			<div className="hr my-1"></div>
+			<div className="hr my-1"/>
 
 			<div className="px-3 font-sans">
 				<div
 					className="bg-white inset w-80 h-52 font-serif text-sm p-1 overflow-y-auto whitespace-pre-wrap"
 					ref={windowRef}
 				>
-					{messages.map(message => {
-						if (message.userID === user.userID) {
-							return (
-								<p key={message.messageID}>
-									<span className="text-indigo-700">
-										{users[message.userID]?.screenname}:
-									</span>
-									<span> {message.body}</span>
-								</p>
-							)
-						} else {
-							return (
-								<p key={message.messageID}>
-									<a className="text-red-500 cursor-pointer" onClick={() => onScreennameClick(message.userID)}>
-										{users[message.userID]?.screenname}:
-									</a>
-									<span> {message.body}</span>
-								</p>
-							)
-						}
-					})}
+					{messages.map(message => (
+						<MessageItem key={message.messageID} message={message} addChannel={addChannel}/>
+					))}
 				</div>
 
-				<div className="hr my-0.5"></div>
+				<div className="hr my-0.5"/>
 
 				<div>
 					<textarea
@@ -165,8 +114,8 @@ export default function Chat({ channelID, close, addChannel }: {
 						autoFocus={true}
 						value={message}
 						onChange={e => setMessage(e.target.value)}
-						onKeyDown={onTextareaChange}
-					></textarea>
+						onKeyDown={onTextareaKeyDown}
+					/>
 
 					<div className="flex flex-row justify-end pb-2">
 						<button
@@ -181,5 +130,40 @@ export default function Chat({ channelID, close, addChannel }: {
 				</div>
 			</div>
 		</div>
+	)
+}
+
+function MessageItem({ message, addChannel }: {
+	message: Message,
+	addChannel: { (channelID: string) },
+}) {
+	const currentUser = useAppSelector(state => state.user.user)
+	const messageUser = useAppSelector(state => state.users[message.userID])
+	const dispatch = useAppDispatch()
+
+	useEffect(() => {
+		if (!messageUser) {
+			dispatch(fetchUser(message.userID))
+		}
+	}, [])
+
+	function onScreennameClick() {
+		dispatch(createChat([message.userID, currentUser.userID]))
+			.unwrap()
+			.then(channel => { addChannel(channel.channelID) })
+	}
+
+	return messageUser && (
+		<p>
+			{message.userID === currentUser.userID ? (
+				<span className="text-indigo-700">{messageUser.screenname}:</span>
+			) : (
+				<a className="text-red-500 cursor-pointer" onClick={onScreennameClick}>
+					{messageUser.screenname}:
+				</a>
+			)}
+
+			<span>&nbsp;{message.body}</span>
+		</p>
 	)
 }
