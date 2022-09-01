@@ -32,13 +32,16 @@ export default function Chat({ channelID, close, addChannel }: {
 
 	function sendMessage() {
 		axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
-			.then(playMessageSend)
 			.then(() => setMessage(''))
 	}
 
 	function addMessage(message: Message) {
 		dispatch(receiveMessage(message))
-		if (message.userID !== user.userID) playMessageReceive().catch(console.error)
+		if (message.userID === user.userID) {
+			playMessageSend().catch(console.error)
+		} else {
+			playMessageReceive().catch(console.error)
+		}
 	}
 
 	useEffect(() => { dispatch(fetchChannel(channelID)) }, [])
