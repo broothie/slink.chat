@@ -20,7 +20,10 @@ func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	messageSlice, err := db.NewFetcher[model.Message](s.db).Query(r.Context(), func(query firestore.Query) firestore.Query {
-		return query.Where("channel_id", "==", chi.URLParam(r, "channel_id"))
+		return query.
+			Where("channel_id", "==", chi.URLParam(r, "channel_id")).
+			OrderBy("created_at", firestore.Asc).
+			LimitToLast(100)
 	})
 	if err != nil {
 		logger.Error("failed to get messages", zap.Error(err))
