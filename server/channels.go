@@ -126,9 +126,7 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channels := lo.Associate(channelSlice, func(channel model.Channel) (string, model.Channel) {
-		return channel.ID, channel
-	})
+	channels := lo.Associate(channelSlice, func(channel model.Channel) (string, model.Channel) { return channel.ID, channel })
 	s.render.JSON(w, http.StatusOK, util.Map{"channels": channels})
 }
 
@@ -197,6 +195,32 @@ func (s *Server) leaveChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render.JSON(w, http.StatusOK, util.Map{"channelID": channelID})
+}
+
+func (s *Server) indexChannelUsers(w http.ResponseWriter, r *http.Request) {
+	logger := ctxzap.Extract(r.Context())
+
+	channel, err := db.NewFetcher[model.Channel](s.db).Fetch(r.Context(), chi.URLParam(r, "channel_id"))
+	if err != nil {
+		if err == db.NotFound {
+			s.render.JSON(w, http.StatusBadRequest, errorMap(err))
+			return
+		}
+
+		logger.Error("failed to fetch channel", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	userSlice, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), channel.UserIDs...)
+	if err != nil {
+		logger.Error("failed to fetch users", zap.Error(err))
+		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
+		return
+	}
+
+	users := lo.Associate(userSlice, func(user model.User) (string, model.User) { return user.ID, user })
+	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
 }
 
 func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {

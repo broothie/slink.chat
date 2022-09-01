@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { Channel } from "../model/model";
 import axios from "../axios";
 import * as _ from "lodash";
+import {UserLookup} from "./usersSlice";
 
 export type ChannelLookup = { [key: string]: Channel }
 
@@ -18,6 +19,14 @@ export const fetchChannel = createAsyncThunk(
 	async (channelID: string) => {
 		const response = await axios.get(`/api/v1/channels/${channelID}`)
 		return response.data.channel as Channel
+	}
+)
+
+export const fetchChannelUsers = createAsyncThunk(
+	'channels/fetchChannelUsers',
+	async (channelID: string) => {
+		const response = await axios.get(`/api/v1/channels/${channelID}/users`)
+		return response.data.users as UserLookup
 	}
 )
 

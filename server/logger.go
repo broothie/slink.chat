@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Server) loggerInjector(next http.Handler) http.Handler {
+func (s *Server) injectLogger(next http.Handler) http.Handler {
 	logger, err := s.cfg.NewLogger()
 	if err != nil {
 		logger = zap.NewExample()

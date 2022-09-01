@@ -7,7 +7,7 @@ import {fetchUser, fetchUsers, UserLookup} from "../store/usersSlice";
 import axios from "../axios";
 import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
-import {createChat, fetchChannel} from "../store/channelsSlice";
+import {createChat, fetchChannel, fetchChannelUsers} from "../store/channelsSlice";
 import {fetchMessages, receiveMessage} from "../store/messagesSlice";
 
 export default function Chat({ channelID, close, addChannel }: {
@@ -46,9 +46,9 @@ export default function Chat({ channelID, close, addChannel }: {
 
 	useEffect(() => { dispatch(fetchChannel(channelID)) }, [])
 	useEffect(() => {
-		dispatch(fetchMessages(channelID))
+		dispatch(fetchChannelUsers(channelID))
 			.unwrap()
-			.then(messages => { dispatch(fetchUsers(_.map(messages, 'userID'))) })
+			.then(() => dispatch(fetchMessages(channelID)))
 	}, [])
 
 	useEffect(() => {

@@ -2,6 +2,7 @@ import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {User} from "../model/model";
 import axios from "../axios";
 import * as _ from "lodash";
+import {fetchChannelUsers} from "./channelsSlice";
 
 export type UserLookup = { [key: string]: User }
 
@@ -10,14 +11,6 @@ export const fetchUser = createAsyncThunk(
 	async (userID: string) => {
 		const response = await axios.get(`/api/v1/users/${userID}`)
 		return response.data.user as User
-	}
-)
-
-export const fetchUsers = createAsyncThunk(
-	'users/fetchUsers',
-	async (userIDs: string[]) => {
-		const response = await axios.get(`/api/v1/users?user_ids=${userIDs.join(',')}`)
-		return response.data.users as UserLookup
 	}
 )
 
@@ -31,7 +24,7 @@ const usersSlice = createSlice({
 			return _.merge({}, state, { [user.userID]: user })
 		})
 
-		builder.addCase(fetchUsers.fulfilled, (state, action) => {
+		builder.addCase(fetchChannelUsers.fulfilled, (state, action) => {
 			const users = action.payload
 			return _.merge({}, state, users)
 		})

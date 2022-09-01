@@ -2,17 +2,18 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/csrf"
-	"net/http"
 )
 
 func (s *Server) routes() chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(s.loggerInjector)
+	r.Use(s.injectLogger)
 	r.Use(middleware.Recoverer)
 	r.Use(csrf.Protect([]byte(s.cfg.Secret)))
 
@@ -38,7 +39,6 @@ func (s *Server) routes() chi.Router {
 					r.Use(s.requireUser)
 
 					r.Get("/", s.showUsers)
-
 					r.Get("/search", s.searchUsers)
 
 					r.Route("/{user_id}", func(r chi.Router) {
@@ -55,7 +55,6 @@ func (s *Server) routes() chi.Router {
 				r.Get("/", s.indexChannels)
 				r.Post("/", s.createChannel)
 				r.Get("/search", s.searchChannels)
-
 				r.Post("/chats", s.upsertChat)
 
 				r.Route("/{channel_id}", func(r chi.Router) {
@@ -64,6 +63,7 @@ func (s *Server) routes() chi.Router {
 					r.Get("/", s.showChannel)
 					r.Post("/join", s.joinChannel)
 					r.Delete("/leave", s.leaveChannel)
+					r.Get("/users", s.indexChannelUsers)
 
 					r.Route("/messages", func(r chi.Router) {
 						r.Get("/", s.indexMessages)

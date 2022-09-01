@@ -132,7 +132,7 @@ func (s *Server) showUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDs := strings.Split(userIDsQuery, ",")
+	userIDs := lo.Uniq(strings.Split(userIDsQuery, ","))
 	userSlice, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), userIDs...)
 	if err != nil {
 		logger.Error("failed to fetch users", zap.Error(err))
