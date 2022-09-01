@@ -13,8 +13,7 @@ const TypeUser Type = "user"
 var userContextKey struct{}
 
 type User struct {
-	UserID    string    `firestore:"user_id" json:"userID"`
-	Type      Type      `firestore:"type" json:"type"`
+	ID        string    `firestore:"id" json:"userID"`
 	CreatedAt time.Time `firestore:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `firestore:"updated_at" json:"updatedAt"`
 
@@ -22,7 +21,7 @@ type User struct {
 	PasswordDigest []byte `firestore:"password_digest" json:"-"`
 }
 
-func (User) ModelType() Type {
+func (User) Type() Type {
 	return TypeUser
 }
 

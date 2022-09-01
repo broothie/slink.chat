@@ -27,7 +27,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+	user, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("screenname", "==", params.Screenname)
 	})
 	if err != nil {
@@ -52,7 +52,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, err := s.newJWTToken(user.UserID)
+	jwt, err := s.newJWTToken(user.ID)
 	if err != nil {
 		logger.Error("failed to create jwt", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))

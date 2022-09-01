@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/securecookie"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 )
 
 const (
@@ -86,8 +87,7 @@ func main() {
 
 	now := time.Now()
 	smarterChild := model.User{
-		UserID:     model.TypeUser.NewID(),
-		Type:       model.TypeUser,
+		ID:         xid.New().String(),
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		Screenname: "SmarterChild",
@@ -99,22 +99,21 @@ func main() {
 
 	// Create World Chat
 	worldChat := model.Channel{
-		ChannelID: model.TypeChannel.NewID(),
-		Type:      model.TypeChannel,
+		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    smarterChild.UserID,
+		UserID:    smarterChild.ID,
 		Name:      model.WorldChatName,
 	}
 
 	var creates []Create
 	creates = append(creates, Create{
-		dr:   db.Collection().Doc(smarterChild.UserID),
+		dr:   db.CollectionFor(smarterChild.Type()).Doc(smarterChild.ID),
 		data: smarterChild,
 	})
 
 	creates = append(creates, Create{
-		dr:   db.Collection().Doc(worldChat.ChannelID),
+		dr:   db.CollectionFor(worldChat.Type()).Doc(worldChat.ID),
 		data: worldChat,
 	})
 
@@ -138,8 +137,7 @@ func main() {
 		}
 
 		newUser := model.User{
-			UserID:         model.TypeUser.NewID(),
-			Type:           model.TypeUser,
+			ID:             xid.New().String(),
 			CreatedAt:      createdAt,
 			UpdatedAt:      updatedAt,
 			Screenname:     oldUser.Screenname,
@@ -147,7 +145,7 @@ func main() {
 		}
 
 		userLookup[oldUser.ID] = &newUser
-		log.Println("user", oldUser.ID, newUser.UserID)
+		log.Println("user", oldUser.ID, newUser.ID)
 	}
 
 	var oldChannels []Channel
@@ -160,7 +158,7 @@ func main() {
 		userID := ""
 		user := userLookup[oldChannel.OwnerID]
 		if user != nil {
-			userID = user.UserID
+			userID = user.ID
 		}
 
 		createdAt, err := time.Parse(dbLayout, oldChannel.CreatedAt)
@@ -176,8 +174,7 @@ func main() {
 		}
 
 		newChannel := model.Channel{
-			ChannelID: model.TypeChannel.NewID(),
-			Type:      model.TypeChannel,
+			ID:        xid.New().String(),
 			CreatedAt: createdAt,
 			UpdatedAt: updatedAt,
 			Name:      oldChannel.Name,
@@ -187,7 +184,7 @@ func main() {
 		}
 
 		channelLookup[oldChannel.ID] = &newChannel
-		log.Println("channel", oldChannel.ID, newChannel.ChannelID)
+		log.Println("channel", oldChannel.ID, newChannel.ID)
 	}
 
 	var oldSubscriptions []Subscription
@@ -206,7 +203,7 @@ func main() {
 			continue
 		}
 
-		channel.UserIDs = append(channel.UserIDs, user.UserID)
+		channel.UserIDs = append(channel.UserIDs, user.ID)
 	}
 
 	var oldMessages []Message
@@ -232,33 +229,32 @@ func main() {
 		}
 
 		newMessage := model.Message{
-			MessageID: model.TypeMessage.NewID(),
-			Type:      model.TypeMessage,
+			ID:        xid.New().String(),
 			CreatedAt: timestamp,
 			UpdatedAt: timestamp,
-			UserID:    user.UserID,
-			ChannelID: channel.ChannelID,
+			UserID:    user.ID,
+			ChannelID: channel.ID,
 			Body:      oldMessage.Body,
 		}
 
 		creates = append(creates, Create{
-			dr:   db.Collection().Doc(newMessage.MessageID),
+			dr:   db.CollectionFor(newMessage.Type()).Doc(newMessage.ID),
 			data: newMessage,
 		})
 
-		log.Println("channel", oldMessage.ID, newMessage.MessageID)
+		log.Println("channel", oldMessage.ID, newMessage.ID)
 	}
 
 	for _, user := range userLookup {
 		creates = append(creates, Create{
-			dr:   db.Collection().Doc(user.UserID),
+			dr:   db.CollectionFor(user.Type()).Doc(user.ID),
 			data: user,
 		})
 	}
 
 	for _, channel := range channelLookup {
 		creates = append(creates, Create{
-			dr:   db.Collection().Doc(channel.ChannelID),
+			dr:   db.CollectionFor(channel.Type()).Doc(channel.ID),
 			data: channel,
 		})
 	}

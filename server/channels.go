@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -34,17 +35,16 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	user, _ := model.UserFromContext(r.Context())
 	now := time.Now()
 	channel := model.Channel{
-		ChannelID: model.TypeChannel.NewID(),
-		Type:      model.TypeChannel,
+		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
 		Name:      params.Name,
-		UserID:    user.UserID,
-		UserIDs:   []string{user.UserID},
+		UserID:    user.ID,
+		UserIDs:   []string{user.ID},
 		Private:   params.Private,
 	}
 
-	if _, err := s.db.Collection().Doc(channel.ChannelID).Create(r.Context(), channel); err != nil {
+	if _, err := s.db.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
 		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
@@ -70,12 +70,12 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, _ := model.UserFromContext(r.Context())
-	if lo.NoneBy(userIDs, func(userID string) bool { return userID == user.UserID }) {
-		userIDs = append(userIDs, user.UserID)
+	if lo.NoneBy(userIDs, func(userID string) bool { return userID == user.ID }) {
+		userIDs = append(userIDs, user.ID)
 	}
 
 	sort.Slice(userIDs, func(i, j int) bool { return userIDs[i] < userIDs[j] })
-	if channel, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+	if channel, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("user_ids", "==", userIDs).Where("private", "==", true)
 	}); err == nil {
 		logger.Info("chat already exists")
@@ -90,22 +90,21 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sort.Slice(users, func(i, j int) bool { return users[i].UserID < users[j].UserID })
+	sort.Slice(users, func(i, j int) bool { return users[i].ID < users[j].ID })
 	name := strings.Join(lo.Map(users, func(user model.User, _ int) string { return user.Screenname }), ", ")
 
 	now := time.Now()
 	channel := model.Channel{
-		ChannelID: model.TypeChannel.NewID(),
-		Type:      model.TypeChannel,
+		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
 		Name:      name,
-		UserID:    user.UserID,
+		UserID:    user.ID,
 		UserIDs:   userIDs,
 		Private:   true,
 	}
 
-	if _, err := s.db.Collection().Doc(channel.ChannelID).Create(r.Context(), channel); err != nil {
+	if _, err := s.db.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
 		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
@@ -118,8 +117,8 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	user, _ := model.UserFromContext(r.Context())
-	channelSlice, err := db.NewFetcher[model.Channel](s.db).Query(r.Context(), func(query firestore.Query) firestore.Query {
-		return query.Where("user_ids", "array-contains", user.UserID)
+	channelSlice, err := db.NewFetcher[model.Channel](s.db).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+		return query.Where("user_ids", "array-contains", user.ID)
 	})
 	if err != nil {
 		logger.Error("failed to fetch channels", zap.Error(err))
@@ -128,7 +127,7 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	channels := lo.Associate(channelSlice, func(channel model.Channel) (string, model.Channel) {
-		return channel.ChannelID, channel
+		return channel.ID, channel
 	})
 	s.render.JSON(w, http.StatusOK, util.Map{"channels": channels})
 }
@@ -175,8 +174,8 @@ func (s *Server) joinChannel(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
-	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayUnion(user.UserID)}}
-	if _, err := s.db.Collection().Doc(channelID).Update(r.Context(), updates); err != nil {
+	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayUnion(user.ID)}}
+	if _, err := s.db.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
 		logger.Error("failed to create subscription", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
@@ -190,8 +189,8 @@ func (s *Server) leaveChannel(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
-	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayRemove(user.UserID)}}
-	if _, err := s.db.Collection().Doc(channelID).Update(r.Context(), updates); err != nil {
+	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayRemove(user.ID)}}
+	if _, err := s.db.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
 		logger.Error("failed to delete subscription", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
@@ -205,8 +204,8 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
-	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
-		return query.Where("user_ids", "array-contains", user.UserID)
+	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+		return query.Where("user_ids", "array-contains", user.ID)
 	}); err != nil {
 		if err == db.NotFound {
 			logger.Info("user not in channel")
@@ -255,8 +254,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 
 		logger.Debug("listening for messages")
 		snapshots := s.db.
-			Collection().
-			Where("type", "==", model.TypeMessage).
+			CollectionFor(model.TypeMessage).
 			Where("channel_id", "==", channelID).
 			Where("created_at", ">", time.Now()).
 			Snapshots(r.Context())

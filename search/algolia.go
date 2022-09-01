@@ -24,7 +24,7 @@ func NewAlgolia(cfg *config.Config) *Algolia {
 }
 
 func (a *Algolia) IndexUser(user model.User) error {
-	if _, err := a.usersIndex().SaveObject(util.Map{"objectID": user.UserID, "screenname": user.Screenname}); err != nil {
+	if _, err := a.usersIndex().SaveObject(util.Map{"objectID": user.ID, "screenname": user.Screenname}); err != nil {
 		return errors.Wrap(err, "failed to update index")
 	}
 
@@ -39,7 +39,7 @@ func (a *Algolia) SearchUsers(query string) ([]model.User, error) {
 
 	users := lo.Map(result.Hits, func(hit map[string]any, _ int) model.User {
 		return model.User{
-			UserID:     hit["objectID"].(string),
+			ID:         hit["objectID"].(string),
 			Screenname: hit["screenname"].(string),
 		}
 	})
@@ -48,7 +48,7 @@ func (a *Algolia) SearchUsers(query string) ([]model.User, error) {
 }
 
 func (a *Algolia) IndexChannel(channel model.Channel) error {
-	if _, err := a.channelsIndex().SaveObject(util.Map{"objectID": channel.ChannelID, "name": channel.Name}); err != nil {
+	if _, err := a.channelsIndex().SaveObject(util.Map{"objectID": channel.ID, "name": channel.Name}); err != nil {
 		return errors.Wrap(err, "failed to fetch channels")
 	}
 
@@ -63,8 +63,8 @@ func (a *Algolia) SearchChannels(query string) ([]model.Channel, error) {
 
 	channels := lo.Map(result.Hits, func(hit map[string]any, _ int) model.Channel {
 		return model.Channel{
-			ChannelID: hit["objectID"].(string),
-			Name:      hit["name"].(string),
+			ID:   hit["objectID"].(string),
+			Name: hit["name"].(string),
 		}
 	})
 

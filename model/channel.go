@@ -8,8 +8,7 @@ const (
 )
 
 type Channel struct {
-	ChannelID string    `firestore:"channel_id" json:"channelID"`
-	Type      Type      `firestore:"type" json:"type"`
+	ID        string    `firestore:"id" json:"channelID"`
 	CreatedAt time.Time `firestore:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `firestore:"updated_at" json:"updatedAt"`
 
@@ -19,6 +18,6 @@ type Channel struct {
 	Private bool     `firestore:"private" json:"private"`
 }
 
-func (Channel) ModelType() Type {
+func (Channel) Type() Type {
 	return TypeChannel
 }

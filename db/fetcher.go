@@ -16,18 +16,18 @@ import (
 
 var NotFound = errors.New("not found")
 
-type QueryFunc func(query firestore.Query) firestore.Query
+type QueryFunc func(query *firestore.CollectionRef) firestore.Query
 
-type Fetcher[M model.Model] struct {
+type Fetcher[M model.Typer] struct {
 	db *DB
 }
 
-func NewFetcher[M model.Model](db *DB) Fetcher[M] {
+func NewFetcher[M model.Typer](db *DB) Fetcher[M] {
 	return Fetcher[M]{db: db}
 }
 
 func (f Fetcher[Model]) Fetch(ctx context.Context, id string) (Model, error) {
-	snapshot, err := f.db.Collection().Doc(id).Get(ctx)
+	snapshot, err := f.db.CollectionFor(f.Type()).Doc(id).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return f.Zero(), NotFound
@@ -47,7 +47,7 @@ func (f Fetcher[Model]) Fetch(ctx context.Context, id string) (Model, error) {
 func (f Fetcher[Model]) FetchMany(ctx context.Context, ids ...string) ([]Model, error) {
 	logger := ctxzap.Extract(ctx)
 
-	refs := lo.Map(ids, func(id string, _ int) *firestore.DocumentRef { return f.db.Collection().Doc(id) })
+	refs := lo.Map(ids, func(id string, _ int) *firestore.DocumentRef { return f.db.CollectionFor(f.Type()).Doc(id) })
 	snapshots, err := f.db.GetAll(ctx, refs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch snapshots for %q", f.Type())
@@ -68,7 +68,7 @@ func (f Fetcher[Model]) FetchMany(ctx context.Context, ids ...string) ([]Model, 
 }
 
 func (f Fetcher[Model]) FetchFirst(ctx context.Context, queryFunc QueryFunc) (Model, error) {
-	docs := queryFunc(f.db.Collection().Where("type", "==", f.Type())).Documents(ctx)
+	docs := queryFunc(f.db.CollectionFor(f.Type())).Documents(ctx)
 	defer docs.Stop()
 
 	snapshot, err := docs.Next()
@@ -91,7 +91,7 @@ func (f Fetcher[Model]) FetchFirst(ctx context.Context, queryFunc QueryFunc) (Mo
 func (f Fetcher[Model]) Query(ctx context.Context, queryFunc QueryFunc) ([]Model, error) {
 	logger := ctxzap.Extract(ctx)
 
-	docs := queryFunc(f.db.Collection().Where("type", "==", f.Type())).Documents(ctx)
+	docs := queryFunc(f.db.CollectionFor(f.Type())).Documents(ctx)
 	defer docs.Stop()
 
 	snapshots, err := docs.GetAll()
@@ -120,5 +120,5 @@ func (f Fetcher[Model]) Zero() Model {
 
 func (f Fetcher[Model]) Type() model.Type {
 	var zero Model
-	return zero.ModelType()
+	return zero.Type()
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/broothie/slink.chat/model"
 	"github.com/gorilla/securecookie"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/rs/xid"
 )
 
 func main() {
@@ -37,8 +38,7 @@ func main() {
 
 	now := time.Now()
 	smarterChild := model.User{
-		UserID:     model.TypeUser.NewID(),
-		Type:       model.TypeUser,
+		ID:         xid.New().String(),
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		Screenname: "SmarterChild",
@@ -51,24 +51,18 @@ func main() {
 
 	// Create World Chat
 	worldChat := model.Channel{
-		ChannelID: model.TypeChannel.NewID(),
-		Type:      model.TypeChannel,
+		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    smarterChild.UserID,
+		UserID:    smarterChild.ID,
 		Name:      model.WorldChatName,
 	}
 
 	batch := db.Batch()
-	batch.Create(db.Collection().Doc(smarterChild.UserID), smarterChild)
-	batch.Create(db.Collection().Doc(worldChat.ChannelID), worldChat)
+	batch.Create(db.CollectionFor(smarterChild.Type()).Doc(smarterChild.ID), smarterChild)
+	batch.Create(db.CollectionFor(worldChat.Type()).Doc(worldChat.ID), worldChat)
 	if _, err := batch.Commit(context.Background()); err != nil {
 		fmt.Println("failed to init db defaults", err)
-		os.Exit(1)
-	}
-
-	if _, err := db.Collection().Doc(worldChat.ChannelID).Create(context.Background(), worldChat); err != nil {
-		fmt.Println("failed to create World Chat", err)
 		os.Exit(1)
 	}
 }

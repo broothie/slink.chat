@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"github.com/samber/lo"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/rs/xid"
+	"github.com/samber/lo"
 
 	"cloud.google.com/go/firestore"
 	"github.com/broothie/slink.chat/db"
@@ -35,7 +37,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger = logger.With(zap.String("screenname", params.Screenname))
-	if _, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
+	if _, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("screenname", "==", params.Screenname)
 	}); err == nil {
 		logger.Info("screenname is taken")
@@ -49,8 +51,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	user := model.User{
-		UserID:     model.TypeUser.NewID(),
-		Type:       model.TypeUser,
+		ID:         xid.New().String(),
 		CreatedAt:  now,
 		UpdatedAt:  now,
 		Screenname: params.Screenname,
@@ -62,7 +63,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := s.db.Collection().Doc(user.UserID).Create(r.Context(), user); err != nil {
+	if _, err := s.db.CollectionFor(user.Type()).Doc(user.ID).Create(r.Context(), user); err != nil {
 		logger.Error("failed to create user", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
@@ -71,11 +72,11 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	indexErr := make(chan error)
 	go func() { indexErr <- s.search.IndexUser(user) }()
 
-	if err := s.joinWorldChat(r.Context(), user.UserID); err != nil {
+	if err := s.joinWorldChat(r.Context(), user.ID); err != nil {
 		logger.Error("failed to create world chat subscription", zap.Error(err))
 	}
 
-	jwt, err := s.newJWTToken(user.UserID)
+	jwt, err := s.newJWTToken(user.ID)
 	if err != nil {
 		logger.Error("failed to create jwt", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -140,7 +141,7 @@ func (s *Server) showUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	users := lo.Associate(userSlice, func(user model.User) (string, model.User) {
-		return user.UserID, user
+		return user.ID, user
 	})
 
 	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
@@ -163,21 +164,21 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, _ := model.UserFromContext(r.Context())
-	users = lo.Reject(users, func(u model.User, _ int) bool { return u.UserID == user.UserID })
-	sort.Slice(users, func(i, j int) bool { return users[i].UserID < users[j].UserID })
+	users = lo.Reject(users, func(u model.User, _ int) bool { return u.ID == user.ID })
+	sort.Slice(users, func(i, j int) bool { return users[i].ID < users[j].ID })
 	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
 }
 
 func (s *Server) joinWorldChat(ctx context.Context, userID string) error {
-	worldChat, err := db.NewFetcher[model.Channel](s.db).FetchFirst(ctx, func(query firestore.Query) firestore.Query {
-		return query.Where("name", "==", model.WorldChatName)
+	worldChat, err := db.NewFetcher[model.Channel](s.db).FetchFirst(ctx, func(query *firestore.CollectionRef) firestore.Query {
+		return query.Where("name", "==", model.WorldChatName).OrderBy("created_at", firestore.Asc)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get world chat")
 	}
 
 	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayUnion(userID)}}
-	if _, err = s.db.Collection().Doc(worldChat.ChannelID).Update(ctx, updates); err != nil {
+	if _, err = s.db.CollectionFor(worldChat.Type()).Doc(worldChat.ID).Update(ctx, updates); err != nil {
 		return errors.Wrap(err, "failed to create world chat subscription")
 	}
 

@@ -6,6 +6,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/broothie/slink.chat/config"
+	"github.com/broothie/slink.chat/model"
+	"github.com/gertd/go-pluralize"
 	"github.com/pkg/errors"
 )
 
@@ -23,6 +25,6 @@ func New(cfg *config.Config) (*DB, error) {
 	return &DB{Client: client, cfg: cfg}, nil
 }
 
-func (db *DB) Collection() *firestore.CollectionRef {
-	return db.Client.Collection(fmt.Sprintf("%s.%s", db.cfg.Environment, config.AppName))
+func (db *DB) CollectionFor(model model.Type) *firestore.CollectionRef {
+	return db.Client.Collection(fmt.Sprintf("%s.%s", db.cfg.Environment, pluralize.NewClient().Plural(model.Type().String())))
 }

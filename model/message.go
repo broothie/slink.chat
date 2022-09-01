@@ -5,8 +5,7 @@ import "time"
 const TypeMessage Type = "message"
 
 type Message struct {
-	MessageID string    `firestore:"message_id" json:"messageID"`
-	Type      Type      `firestore:"type" json:"type"`
+	ID        string    `firestore:"id" json:"messageID"`
 	CreatedAt time.Time `firestore:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `firestore:"updated_at" json:"updatedAt"`
 
@@ -15,6 +14,6 @@ type Message struct {
 	Body      string `firestore:"body" json:"body"`
 }
 
-func (Message) ModelType() Type {
+func (Message) Type() Type {
 	return TypeMessage
 }

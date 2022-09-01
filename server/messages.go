@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -19,7 +20,7 @@ import (
 func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	messageSlice, err := db.NewFetcher[model.Message](s.db).Query(r.Context(), func(query firestore.Query) firestore.Query {
+	messageSlice, err := db.NewFetcher[model.Message](s.db).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.
 			Where("channel_id", "==", chi.URLParam(r, "channel_id")).
 			OrderBy("created_at", firestore.Asc).
@@ -32,7 +33,7 @@ func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	messages := lo.Associate(messageSlice, func(message model.Message) (string, model.Message) {
-		return message.MessageID, message
+		return message.ID, message
 	})
 
 	s.render.JSON(w, http.StatusOK, util.Map{"messages": messages})
@@ -50,8 +51,8 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 
 	channelID := chi.URLParam(r, "channel_id")
 	user, _ := model.UserFromContext(r.Context())
-	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
-		return query.Where("user_ids", "array-contains", user.UserID)
+	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+		return query.Where("user_ids", "array-contains", user.ID)
 	}); err != nil {
 		if err == db.NotFound {
 			logger.Info("user not in channel")
@@ -66,16 +67,15 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 	message := model.Message{
-		MessageID: model.TypeMessage.NewID(),
-		Type:      model.TypeMessage,
+		ID:        xid.New().String(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    user.UserID,
+		UserID:    user.ID,
 		ChannelID: channelID,
 		Body:      params.Body,
 	}
 
-	if _, err := s.db.Collection().Doc(message.MessageID).Create(r.Context(), message); err != nil {
+	if _, err := s.db.CollectionFor(message.Type()).Doc(message.ID).Create(r.Context(), message); err != nil {
 		logger.Error("failed to create message", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
