@@ -10,6 +10,7 @@ import (
 	"github.com/broothie/slink.chat/config"
 	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
+	"github.com/broothie/slink.chat/search"
 	"github.com/gorilla/securecookie"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/xid"
@@ -36,6 +37,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	src := search.NewAlgolia(cfg)
+
 	now := time.Now()
 	smarterChild := model.User{
 		ID:         xid.New().String(),
@@ -55,6 +58,7 @@ func main() {
 		CreatedAt: now,
 		UpdatedAt: now,
 		UserID:    smarterChild.ID,
+		UserIDs:   []string{smarterChild.ID},
 		Name:      model.WorldChatName,
 	}
 
@@ -63,6 +67,16 @@ func main() {
 	batch.Create(db.CollectionFor(worldChat.Type()).Doc(worldChat.ID), worldChat)
 	if _, err := batch.Commit(context.Background()); err != nil {
 		fmt.Println("failed to init db defaults", err)
+		os.Exit(1)
+	}
+
+	if err := src.IndexUser(smarterChild); err != nil {
+		fmt.Println("failed to index smarterchild", err)
+		os.Exit(1)
+	}
+
+	if err := src.IndexChannel(worldChat); err != nil {
+		fmt.Println("failed to index world chat", err)
 		os.Exit(1)
 	}
 }
