@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/algolia/algoliasearch-client-go/v3/algolia/search"
 	"github.com/broothie/slink.chat/config"
 	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
+	"github.com/broothie/slink.chat/util"
 	"github.com/gorilla/securecookie"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pkg/errors"
@@ -57,8 +60,8 @@ type Message struct {
 }
 
 type Create struct {
-	dr   *firestore.DocumentRef
-	data any
+	docRef *firestore.DocumentRef
+	data   any
 }
 
 func main() {
@@ -83,8 +86,6 @@ func main() {
 		log.Fatalln("failed to get new db", err)
 	}
 
-	// batch := db.Batch()
-
 	now := time.Now()
 	smarterChild := model.User{
 		ID:         xid.New().String(),
@@ -108,13 +109,13 @@ func main() {
 
 	var creates []Create
 	creates = append(creates, Create{
-		dr:   db.CollectionFor(smarterChild.Type()).Doc(smarterChild.ID),
-		data: smarterChild,
+		docRef: db.CollectionFor(smarterChild.Type()).Doc(smarterChild.ID),
+		data:   smarterChild,
 	})
 
 	creates = append(creates, Create{
-		dr:   db.CollectionFor(worldChat.Type()).Doc(worldChat.ID),
-		data: worldChat,
+		docRef: db.CollectionFor(worldChat.Type()).Doc(worldChat.ID),
+		data:   worldChat,
 	})
 
 	var oldUsers []User
@@ -122,6 +123,7 @@ func main() {
 		log.Fatalln("failed to decode users file", err)
 	}
 
+	var batchIndexOperations []search.BatchOperationIndexed
 	userLookup := make(map[int]*model.User)
 	for _, oldUser := range oldUsers {
 		createdAt, err := time.Parse(dbLayout, oldUser.CreatedAt)
@@ -145,6 +147,17 @@ func main() {
 		}
 
 		userLookup[oldUser.ID] = &newUser
+		batchIndexOperations = append(batchIndexOperations, search.BatchOperationIndexed{
+			IndexName: fmt.Sprintf("users-%s", cfg.Environment),
+			BatchOperation: search.BatchOperation{
+				Action: search.AddObject,
+				Body: util.Map{
+					"objectId":   newUser.ID,
+					"screenname": newUser.Screenname,
+				},
+			},
+		})
+
 		log.Println("user", oldUser.ID, newUser.ID)
 	}
 
@@ -184,6 +197,16 @@ func main() {
 		}
 
 		channelLookup[oldChannel.ID] = &newChannel
+		batchIndexOperations = append(batchIndexOperations, search.BatchOperationIndexed{
+			BatchOperation: search.BatchOperation{
+				Action: search.AddObject,
+				Body: util.Map{
+					"objectId": newChannel.ID,
+					"name":     newChannel.Name,
+				},
+			},
+			IndexName: fmt.Sprintf("channels-%s", cfg.Environment),
+		})
 		log.Println("channel", oldChannel.ID, newChannel.ID)
 	}
 
@@ -238,24 +261,24 @@ func main() {
 		}
 
 		creates = append(creates, Create{
-			dr:   db.CollectionFor(newMessage.Type()).Doc(newMessage.ID),
-			data: newMessage,
+			docRef: db.CollectionFor(newMessage.Type()).Doc(newMessage.ID),
+			data:   newMessage,
 		})
 
-		log.Println("channel", oldMessage.ID, newMessage.ID)
+		log.Println("message", oldMessage.ID, newMessage.ID)
 	}
 
 	for _, user := range userLookup {
 		creates = append(creates, Create{
-			dr:   db.CollectionFor(user.Type()).Doc(user.ID),
-			data: user,
+			docRef: db.CollectionFor(user.Type()).Doc(user.ID),
+			data:   user,
 		})
 	}
 
 	for _, channel := range channelLookup {
 		creates = append(creates, Create{
-			dr:   db.CollectionFor(channel.Type()).Doc(channel.ID),
-			data: channel,
+			docRef: db.CollectionFor(channel.Type()).Doc(channel.ID),
+			data:   channel,
 		})
 	}
 
@@ -269,7 +292,7 @@ func main() {
 
 		batch := db.Batch()
 		for _, create := range creates[start:end] {
-			batch.Create(create.dr, create.data)
+			batch.Create(create.docRef, create.data)
 		}
 
 		log.Println("committing", start, end)
@@ -277,6 +300,14 @@ func main() {
 			log.Fatalln("failed to commit batch", start, end, err)
 		}
 	}
+
+	log.Println("indexing")
+	src := search.NewClient(cfg.AlgoliaAppID, cfg.AlgoliaAPIKey)
+	if _, err := src.MultipleBatch(batchIndexOperations); err != nil {
+		log.Fatalln("failed to index things", err)
+	}
+
+	log.Println("done")
 }
 
 func readJSONFile(filename string, v any) error {
