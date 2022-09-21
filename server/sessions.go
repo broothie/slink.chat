@@ -42,12 +42,12 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if passwordsMatch, err := user.PasswordsMatch(params.Password); err != nil {
+	if passwordsMatch, err := user.PasswordMatches(params.Password); err != nil {
 		logger.Error("failed to compare passwords", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
 	} else if !passwordsMatch {
-		logger.Error("failed to decode body", zap.Error(err))
+		logger.Info("passwords don't match")
 		s.render.JSON(w, http.StatusUnauthorized, errorMap(errors.New("invalid screenname/password combination")))
 		return
 	}

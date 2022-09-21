@@ -4,17 +4,33 @@ import axios from "../axios";
 
 export const createUser = createAsyncThunk(
 	'users/createUser',
-	async (params: { screenname: string, password: string }) => {
-		const response = await axios.post('/api/v1/users', JSON.stringify(params))
-		return response.data.user as User
+	async (params: { screenname: string, password: string }, { rejectWithValue }) => {
+		try {
+			const response = await axios.post('/api/v1/users', JSON.stringify(params))
+			return response.data.user as User
+		} catch (error) {
+			if (error.response) {
+				return rejectWithValue(error.response.data.errors)
+			} else {
+				throw error
+			}
+		}
 	}
 )
 
 export const createSession = createAsyncThunk(
 	'users/createSession',
-	async (params: { screenname: string, password: string }) => {
-		const response = await axios.post('/api/v1/session', JSON.stringify(params))
-		return response.data.user as User
+	async (params: { screenname: string, password: string }, {rejectWithValue}) => {
+		try {
+			const response = await axios.post('/api/v1/session', JSON.stringify(params))
+			return response.data.user as User
+		} catch (error) {
+			if (error.response) {
+				return rejectWithValue(error.response.data.errors)
+			} else {
+				throw error
+			}
+		}
 	}
 )
 

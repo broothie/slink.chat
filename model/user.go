@@ -35,7 +35,7 @@ func (u *User) UpdatePassword(password string) error {
 	return nil
 }
 
-func (u *User) PasswordsMatch(password string) (bool, error) {
+func (u *User) PasswordMatches(password string) (bool, error) {
 	if err := bcrypt.CompareHashAndPassword(u.PasswordDigest, []byte(password)); err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return false, nil

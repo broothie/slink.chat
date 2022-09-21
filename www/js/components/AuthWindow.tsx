@@ -2,14 +2,16 @@ import * as React from "react";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import TitleBar from "./TitleBar";
+import * as _ from "lodash";
 
 type Submit = { (screenname: string, password: string) }
 
-export default function AuthWindow({ title, swapText, swapLink, submit }: {
+export default function AuthWindow({ title, swapText, swapLink, submit, messages }: {
 	title: string,
 	swapText: string,
 	swapLink: string,
 	submit: Submit,
+	messages: string[],
 }) {
 	const [screenname, setScreenname] = useState('')
 	const [password, setPassword] = useState('')
@@ -78,6 +80,14 @@ export default function AuthWindow({ title, swapText, swapLink, submit }: {
 							onChange={e => setPassword(e.target.value)}
 						/>
 					</div>
+
+					{!_.isEmpty(messages) && (
+						<div className="text-sm">
+							{messages.map((message, index) => (
+								<p key={index} className="text-rose-600">{message}</p>
+							))}
+						</div>
+					)}
 
 					<div className="flex flex-row justify-between items-center py-1">
 						<a href="https://github.com/broothie/slink.chat" className="text-sm link">GitHub</a>
