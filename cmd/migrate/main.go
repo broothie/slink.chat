@@ -197,16 +197,20 @@ func main() {
 		}
 
 		channelLookup[oldChannel.ID] = &newChannel
-		batchIndexOperations = append(batchIndexOperations, search.BatchOperationIndexed{
-			BatchOperation: search.BatchOperation{
-				Action: search.AddObject,
-				Body: util.Map{
-					"objectId": newChannel.ID,
-					"name":     newChannel.Name,
+
+		if !newChannel.Private {
+			batchIndexOperations = append(batchIndexOperations, search.BatchOperationIndexed{
+				BatchOperation: search.BatchOperation{
+					Action: search.AddObject,
+					Body: util.Map{
+						"objectId": newChannel.ID,
+						"name":     newChannel.Name,
+					},
 				},
-			},
-			IndexName: fmt.Sprintf("channels-%s", cfg.Environment),
-		})
+				IndexName: fmt.Sprintf("channels-%s", cfg.Environment),
+			})
+		}
+
 		log.Println("channel", oldChannel.ID, newChannel.ID)
 	}
 
