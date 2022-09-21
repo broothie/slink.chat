@@ -31,6 +31,6 @@ func (s *Server) NewChannelJob(ctx context.Context, payload NewChannelJob) error
 		return errors.Wrap(err, "failed to index channel")
 	}
 
-	logger.Info("indexed channel")
+	logger.Info("indexed channel", zap.String("name", channel.Name))
 	return nil
 }
