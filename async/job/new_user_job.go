@@ -46,7 +46,7 @@ func (s *Server) NewUserJob(ctx context.Context, payload NewUserJob) error {
 	if _, err = s.DB.CollectionFor(worldChat.Type()).Doc(worldChat.ID).Update(ctx, updates); err != nil {
 		return errors.Wrap(err, "failed to create world chat subscription")
 	}
-	logger.Info("added user to World Chat")
 
+	logger.Info("added user to World Chat")
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/broothie/slink.chat/async/job"
 	"github.com/broothie/slink.chat/db"
 	"github.com/broothie/slink.chat/model"
 	"github.com/broothie/slink.chat/util"
@@ -51,8 +52,8 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !channel.Private {
-		if err := s.Search.IndexChannel(channel); err != nil {
-			logger.Error("failed to update channel search index", zap.Error(err))
+		if err := s.Async.Do(r.Context(), job.NewChannelJob{ChannelID: channel.ID}); err != nil {
+			logger.Error("failed to queue NewChannelJob", zap.Error(err))
 		}
 	}
 

@@ -18,6 +18,14 @@ func (s *Server) dispatch(ctx context.Context, message async.Message) error {
 		}
 
 		return s.NewUserJob(ctx, payload)
+
+	case NewChannelJob{}.Name():
+		var payload NewChannelJob
+		if err := json.Unmarshal(message.Payload, &payload); err != nil {
+			return errors.Wrap(err, "failed to unmarshal payload")
+		}
+
+		return s.NewChannelJob(ctx, payload)
 	}
 
 	return nil
