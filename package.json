@@ -8,6 +8,8 @@
     "scripts": "jq .scripts package.json",
     "server": "go run cmd/server/main.go",
     "server:watch": "gin -i -d cmd/server --notifications",
+    "jobs": "go run cmd/job/main.go",
+    "jobs:watch": "gin -i -p 3010 -a 3011 -d cmd/job --notifications",
     "init": "go run cmd/init/main.go",
     "js": "go run cmd/bundle/main.go --production",
     "js:watch": "go run cmd/bundle/main.go --watch",

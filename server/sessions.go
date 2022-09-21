@@ -27,7 +27,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := db.NewFetcher[model.User](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	user, err := db.NewFetcher[model.User](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("screenname", "==", params.Screenname)
 	})
 	if err != nil {
@@ -101,7 +101,7 @@ func (s *Server) requireUser(next http.Handler) http.Handler {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
-			return []byte(s.cfg.Secret), nil
+			return []byte(s.Config.Secret), nil
 		})
 		if err != nil {
 			logger.Error("jwt parse error", zap.Error(err))
@@ -123,7 +123,7 @@ func (s *Server) requireUser(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := db.NewFetcher[model.User](s.db).Fetch(r.Context(), userID)
+		user, err := db.NewFetcher[model.User](s.DB).Fetch(r.Context(), userID)
 		if err != nil {
 			logger.Error("failed to get user from db", zap.Error(err))
 			s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -137,7 +137,7 @@ func (s *Server) requireUser(next http.Handler) http.Handler {
 
 func (s *Server) newJWTToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"user_id": userID})
-	tokenString, err := token.SignedString([]byte(s.cfg.Secret))
+	tokenString, err := token.SignedString([]byte(s.Config.Secret))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to sign JWT")
 	}

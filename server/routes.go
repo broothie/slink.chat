@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/broothie/slink.chat/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/csrf"
@@ -12,17 +13,16 @@ import (
 func (s *Server) routes() chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(s.injectLogger)
+	r.Use(util.ContextLoggerMiddleware(s.Logger))
 	r.Use(middleware.Recoverer)
-	r.Use(csrf.Protect([]byte(s.cfg.Secret)))
+	r.Use(csrf.Protect([]byte(s.Config.Secret)))
 
 	r.Get("/", s.index)
 
 	r.Get("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
 
 	r.Route("/api", func(r chi.Router) {
-		r.Use(middleware.Logger)
+		r.Use(middleware.RequestLogger(util.NewChiLogFormatter(s.Config)))
 
 		r.Route("/v1", func(r chi.Router) {
 			r.With(s.requireUser).Get("/user", s.showCurrentUser)
@@ -75,7 +75,7 @@ func (s *Server) routes() chi.Router {
 		})
 	})
 
-	if s.cfg.IsDevelopment() {
+	if s.Config.IsDevelopment() {
 		chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 			if handler != nil {
 				fmt.Println(method, route)

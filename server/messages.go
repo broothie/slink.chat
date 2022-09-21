@@ -20,7 +20,7 @@ import (
 func (s *Server) indexMessages(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	messageSlice, err := db.NewFetcher[model.Message](s.db).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	messageSlice, err := db.NewFetcher[model.Message](s.DB).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.
 			Where("channel_id", "==", chi.URLParam(r, "channel_id")).
 			OrderBy("created_at", firestore.Asc).
@@ -51,7 +51,7 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 
 	channelID := chi.URLParam(r, "channel_id")
 	user, _ := model.UserFromContext(r.Context())
-	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if _, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("user_ids", "array-contains", user.ID)
 	}); err != nil {
 		if err == db.NotFound {
@@ -75,7 +75,7 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 		Body:      params.Body,
 	}
 
-	if _, err := s.db.CollectionFor(message.Type()).Doc(message.ID).Create(r.Context(), message); err != nil {
+	if _, err := s.DB.CollectionFor(message.Type()).Doc(message.ID).Create(r.Context(), message); err != nil {
 		logger.Error("failed to create message", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return

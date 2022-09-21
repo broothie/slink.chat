@@ -44,14 +44,14 @@ func (s *Server) createChannel(w http.ResponseWriter, r *http.Request) {
 		Private:   params.Private,
 	}
 
-	if _, err := s.db.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
+	if _, err := s.DB.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
 		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
 	}
 
 	if !channel.Private {
-		if err := s.search.IndexChannel(channel); err != nil {
+		if err := s.Search.IndexChannel(channel); err != nil {
 			logger.Error("failed to update channel search index", zap.Error(err))
 		}
 	}
@@ -75,7 +75,7 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sort.Slice(userIDs, func(i, j int) bool { return userIDs[i] < userIDs[j] })
-	if channel, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if channel, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("user_ids", "==", userIDs).Where("private", "==", true)
 	}); err == nil {
 		logger.Info("chat already exists")
@@ -83,7 +83,7 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), userIDs...)
+	users, err := db.NewFetcher[model.User](s.DB).FetchMany(r.Context(), userIDs...)
 	if err != nil {
 		logger.Error("failed to fetch users", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -104,7 +104,7 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 		Private:   true,
 	}
 
-	if _, err := s.db.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
+	if _, err := s.DB.CollectionFor(channel.Type()).Doc(channel.ID).Create(r.Context(), channel); err != nil {
 		logger.Error("failed to create channel", zap.Error(err))
 		s.render.JSON(w, http.StatusBadRequest, errorMap(err))
 		return
@@ -117,7 +117,7 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	user, _ := model.UserFromContext(r.Context())
-	channelSlice, err := db.NewFetcher[model.Channel](s.db).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	channelSlice, err := db.NewFetcher[model.Channel](s.DB).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("user_ids", "array-contains", user.ID)
 	})
 	if err != nil {
@@ -133,7 +133,7 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 func (s *Server) showChannel(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	channel, err := db.NewFetcher[model.Channel](s.db).Fetch(r.Context(), chi.URLParam(r, "channel_id"))
+	channel, err := db.NewFetcher[model.Channel](s.DB).Fetch(r.Context(), chi.URLParam(r, "channel_id"))
 	if err != nil {
 		if err == db.NotFound {
 			s.render.JSON(w, http.StatusBadRequest, errorMap(err))
@@ -157,7 +157,7 @@ func (s *Server) searchChannels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channels, err := s.search.SearchChannels(query)
+	channels, err := s.Search.SearchChannels(query)
 	if err != nil {
 		logger.Error("failed to search channels", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -173,7 +173,7 @@ func (s *Server) joinChannel(w http.ResponseWriter, r *http.Request) {
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
 	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayUnion(user.ID)}}
-	if _, err := s.db.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
+	if _, err := s.DB.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
 		logger.Error("failed to create subscription", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
@@ -188,7 +188,7 @@ func (s *Server) leaveChannel(w http.ResponseWriter, r *http.Request) {
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
 	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayRemove(user.ID)}}
-	if _, err := s.db.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
+	if _, err := s.DB.CollectionFor(model.TypeChannel).Doc(channelID).Update(r.Context(), updates); err != nil {
 		logger.Error("failed to delete subscription", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
 		return
@@ -200,7 +200,7 @@ func (s *Server) leaveChannel(w http.ResponseWriter, r *http.Request) {
 func (s *Server) indexChannelUsers(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
-	channel, err := db.NewFetcher[model.Channel](s.db).Fetch(r.Context(), chi.URLParam(r, "channel_id"))
+	channel, err := db.NewFetcher[model.Channel](s.DB).Fetch(r.Context(), chi.URLParam(r, "channel_id"))
 	if err != nil {
 		if err == db.NotFound {
 			s.render.JSON(w, http.StatusBadRequest, errorMap(err))
@@ -212,7 +212,7 @@ func (s *Server) indexChannelUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userSlice, err := db.NewFetcher[model.User](s.db).FetchMany(r.Context(), channel.UserIDs...)
+	userSlice, err := db.NewFetcher[model.User](s.DB).FetchMany(r.Context(), channel.UserIDs...)
 	if err != nil {
 		logger.Error("failed to fetch users", zap.Error(err))
 		s.render.JSON(w, http.StatusInternalServerError, errorMap(err))
@@ -228,7 +228,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
-	if _, err := db.NewFetcher[model.Channel](s.db).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if _, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
 		return query.Where("user_ids", "array-contains", user.ID)
 	}); err != nil {
 		if err == db.NotFound {
@@ -277,7 +277,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 		defer close(dbCloseChan)
 
 		logger.Debug("listening for messages")
-		snapshots := s.db.
+		snapshots := s.DB.
 			CollectionFor(model.TypeMessage).
 			Where("channel_id", "==", channelID).
 			Where("created_at", ">", time.Now()).
