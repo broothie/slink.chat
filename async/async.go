@@ -53,7 +53,7 @@ func (a *Async) Do(ctx context.Context, job Job) error {
 		return errors.Wrap(err, "failed to marshal message")
 	}
 
-	if a.config.AsyncTopic == "" {
+	if a.config.IsLocal() {
 		if err := a.sendToLocalJobServer(job.Name(), data); err != nil {
 			return errors.Wrap(err, "failed to publish message to local job server")
 		}
