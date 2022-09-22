@@ -5,10 +5,12 @@ import { useEffect } from "react";
 import { destroyChannel, fetchChannels } from "../store/channelsSlice";
 import * as _ from 'lodash'
 import TitleBar from "./TitleBar";
-import { playDoorSlam } from "../audio";
+import {playDoorSlam} from "../audio";
+import {Channel} from "../model/model";
+import useSocket from "../useSocket";
 
 export default function ChannelList({ addChannel, openCreateChannel, openCreateChat, openSearchChannels }: {
-	addChannel: { (channelID: string) },
+	addChannel: { (channelID: string, ring?: boolean) },
 	openCreateChannel: { () },
 	openCreateChat: { () },
 	openSearchChannels: { () },
@@ -27,9 +29,11 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 		dispatch(destroyChannel(channelID))
 	}
 
-	useEffect(() => {
-		dispatch(fetchChannels())
-	}, [])
+	useEffect(() => { dispatch(fetchChannels()) }, [])
+
+	useSocket('ChannelList', 'api/v1/channels/chats/messages', (channel: Channel) => {
+		addChannel(channel.channelID, true)
+	})
 
 	const privateChannels = _.filter(channels, 'private')
 	const publicChannels = _.reject(channels, 'private')

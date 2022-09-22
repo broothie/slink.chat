@@ -9,6 +9,7 @@ import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
 import {createChat, fetchChannel, fetchChannelUsers} from "../store/channelsSlice";
 import {fetchMessages, receiveMessage} from "../store/messagesSlice";
+import useSocket from "../useSocket";
 
 export default function Chat({ channelID, close, addChannel }: {
 	channelID: string,
@@ -58,35 +59,9 @@ export default function Chat({ channelID, close, addChannel }: {
 		}
 	}, [messages])
 
-	let closedByClient = false
-	let socket
-	function startSocket() {
-		const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
-		socket = new WebSocket(`${protocol}://${location.host}/api/v1/channels/${channelID}/messages/subscribe`)
-
-		socket.onopen = () => { console.log('socket opened', channelID) }
-		socket.onmessage = event => {
-			const message = JSON.parse(event.data) as Message
-			addMessage(message)
-		}
-
-		socket.onclose = event => {
-			if (closedByClient) return
-
-			console.log('server closed socket', {channelID, event})
-			setTimeout(startSocket, 1000)
-		}
-	}
-
-	useEffect(() => {
-		startSocket()
-
-		return () => {
-			closedByClient = true
-			socket.close()
-			console.log('socket closed', channelID)
-		}
-	}, [])
+	useSocket('Chat', `api/v1/channels/${channelID}/messages/subscribe`, (message: Message) => {
+		addMessage(message)
+	})
 
 	return channel && (
 		<div className="window p-1 flex flex-col w-fit">

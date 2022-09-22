@@ -6,6 +6,7 @@ import * as _ from "lodash";
 import CreateChannel from "./CreateChannel";
 import CreateChat from "./CreateChat";
 import SearchChannels from "./SearchChannels";
+import {playMessageRing} from "../audio";
 
 export default function Start() {
 	const [windowIDs, setWindowIDs] = useState([])
@@ -30,7 +31,13 @@ export default function Start() {
 		setWindowIDs(windowIDs => _.sortBy(windowIDs, windowID => windowID === id))
 	}
 
-	function addChannel(channelID: string) {
+	function addChannel(channelID: string, ring?: boolean) {
+		setWindowIDs(windowIDs => {
+			if (ring && !_.includes(windowIDs, channelID)) playMessageRing().catch(console.error)
+
+			return windowIDs
+		})
+
 		addWindow(channelID, { left: 50, top: 50 }, (
 			<Chat channelID={channelID} close={() => removeWindow(channelID)} addChannel={addChannel} />
 		))
