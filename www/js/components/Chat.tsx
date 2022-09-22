@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 import * as _ from "lodash";
 import {useAppDispatch, useAppSelector} from "../hooks";
 import {Message} from "../model/model";
-import {fetchUser, fetchUsers, UserLookup} from "../store/usersSlice";
+import {fetchUser} from "../store/usersSlice";
 import axios from "../axios";
 import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
