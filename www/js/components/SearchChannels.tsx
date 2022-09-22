@@ -51,7 +51,7 @@ export default function SearchChannels({ addChannel, close }: {
 
         <div className="hr"/>
 
-        <div className="bg-white inset p-1 text-sm h-52">
+        <div className="bg-white inset p-1 text-sm h-52 overflow-y-auto">
           {channels.map(channel => (
             <div key={channel.channelID} className="p-1 hover:bg-logo-tile hover:text-white flex flex-row justify-between">
               <p>{channel.name}</p>
