@@ -19,12 +19,12 @@ func NewDB(db *pkgdb.DB) *DB {
 	return &DB{db: db}
 }
 
-func (db *DB) IndexUser(user model.User) error {
+func (db *DB) IndexUser(model.User) error {
 	return nil
 }
 
 func (db *DB) SearchUsers(query string) ([]model.User, error) {
-	users, err := pkgdb.NewFetcher[model.User](db.db).Query(context.Background(), func(query *firestore.CollectionRef) firestore.Query { return query.Where("screenname", ">", "") })
+	users, err := pkgdb.NewFetcher[model.User](db.db).Query(context.Background(), func(query firestore.Query) firestore.Query { return query.Where("screenname", ">", "") })
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch users")
 	}
@@ -38,7 +38,7 @@ func (db *DB) IndexChannel(user model.Channel) error {
 }
 
 func (db *DB) SearchChannels(query string) ([]model.Channel, error) {
-	channels, err := pkgdb.NewFetcher[model.Channel](db.db).Query(context.Background(), func(query *firestore.CollectionRef) firestore.Query { return query.Where("screenname", ">", "") })
+	channels, err := pkgdb.NewFetcher[model.Channel](db.db).Query(context.Background(), func(query firestore.Query) firestore.Query { return query.Where("screenname", ">", "") })
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch channels")
 	}

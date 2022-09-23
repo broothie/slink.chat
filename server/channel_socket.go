@@ -24,7 +24,7 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := model.UserFromContext(r.Context())
 	channelID := chi.URLParam(r, "channel_id")
-	if _, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if _, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
 		return query.Where("user_ids", "array-contains", user.ID)
 	}); err != nil {
 		if err == db.NotFound {

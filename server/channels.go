@@ -72,7 +72,7 @@ func (s *Server) upsertChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sort.Slice(userIDs, func(i, j int) bool { return userIDs[i] < userIDs[j] })
-	if channel, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if channel, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
 		return query.Where("user_ids", "==", userIDs).Where("private", "==", true)
 	}); err == nil {
 		logger.Info("chat already exists")
@@ -114,7 +114,7 @@ func (s *Server) indexChannels(w http.ResponseWriter, r *http.Request) {
 	logger := ctxzap.Extract(r.Context())
 
 	user, _ := model.UserFromContext(r.Context())
-	channelSlice, err := db.NewFetcher[model.Channel](s.DB).Query(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	channelSlice, err := db.NewFetcher[model.Channel](s.DB).Query(r.Context(), func(query firestore.Query) firestore.Query {
 		return query.Where("user_ids", "array-contains", user.ID)
 	})
 	if err != nil {

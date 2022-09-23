@@ -35,7 +35,7 @@ func (s *Server) NewUserJob(ctx context.Context, payload NewUserJob) error {
 	logger.Info("indexed user")
 
 	channelFetcher := db.NewFetcher[model.Channel](s.DB)
-	worldChat, err := channelFetcher.FetchFirst(ctx, func(query *firestore.CollectionRef) firestore.Query {
+	worldChat, err := channelFetcher.FetchFirst(ctx, func(query firestore.Query) firestore.Query {
 		return query.Where("name", "==", model.WorldChatName).OrderBy("created_at", firestore.Asc)
 	})
 	if err != nil {

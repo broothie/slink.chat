@@ -27,7 +27,7 @@ func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := db.NewFetcher[model.User](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	user, err := db.NewFetcher[model.User](s.DB).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
 		return query.Where("screenname", "==", params.Screenname)
 	})
 	if err != nil {

@@ -16,7 +16,7 @@ import (
 
 var NotFound = errors.New("not found")
 
-type QueryFunc func(query *firestore.CollectionRef) firestore.Query
+type QueryFunc func(query firestore.Query) firestore.Query
 
 type Fetcher[M model.Typer] struct {
 	db *DB
@@ -68,7 +68,7 @@ func (f Fetcher[Model]) FetchMany(ctx context.Context, ids ...string) ([]Model, 
 }
 
 func (f Fetcher[Model]) FetchFirst(ctx context.Context, queryFunc QueryFunc) (Model, error) {
-	docs := queryFunc(f.db.CollectionFor(f.Type())).Documents(ctx)
+	docs := queryFunc(f.db.CollectionFor(f.Type()).Query).Documents(ctx)
 	defer docs.Stop()
 
 	snapshot, err := docs.Next()
@@ -91,7 +91,7 @@ func (f Fetcher[Model]) FetchFirst(ctx context.Context, queryFunc QueryFunc) (Mo
 func (f Fetcher[Model]) Query(ctx context.Context, queryFunc QueryFunc) ([]Model, error) {
 	logger := ctxzap.Extract(ctx)
 
-	docs := queryFunc(f.db.CollectionFor(f.Type())).Documents(ctx)
+	docs := queryFunc(f.db.CollectionFor(f.Type()).Query).Documents(ctx)
 	defer docs.Stop()
 
 	snapshots, err := docs.GetAll()

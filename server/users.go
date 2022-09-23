@@ -37,7 +37,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger = logger.With(zap.String("screenname", params.Screenname))
-	if _, err := db.NewFetcher[model.User](s.DB).FetchFirst(r.Context(), func(query *firestore.CollectionRef) firestore.Query {
+	if _, err := db.NewFetcher[model.User](s.DB).FetchFirst(r.Context(), func(query firestore.Query) firestore.Query {
 		return query.Where("screenname", "==", params.Screenname)
 	}); err == nil {
 		logger.Info("screenname is taken")
@@ -163,7 +163,7 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) joinWorldChat(ctx context.Context, userID string) error {
-	worldChat, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(ctx, func(query *firestore.CollectionRef) firestore.Query {
+	worldChat, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(ctx, func(query firestore.Query) firestore.Query {
 		return query.Where("name", "==", model.WorldChatName).OrderBy("created_at", firestore.Asc)
 	})
 	if err != nil {
