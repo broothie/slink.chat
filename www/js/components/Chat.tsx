@@ -76,7 +76,7 @@ export default function Chat({ channelID, close, addChannel }: {
 					className="bg-white inset w-80 h-52 font-serif text-sm p-1 overflow-y-auto whitespace-pre-wrap"
 					ref={windowRef}
 				>
-					{messages.map(message => (
+					{_.sortBy(messages, 'createdAt').map(message => (
 						<MessageItem key={message.messageID} message={message} addChannel={addChannel}/>
 					))}
 				</div>
