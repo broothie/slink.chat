@@ -77,10 +77,10 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 
 	batch := s.DB.Batch()
 	batch.Create(s.DB.CollectionFor(message.Type()).Doc(message.ID), message)
-	batch.Update(s.DB.CollectionFor(model.TypeChannel).Doc(channelID), []firestore.Update{{
-		Path:  "last_message_sent_at",
-		Value: now,
-	}})
+	batch.Update(s.DB.CollectionFor(model.TypeChannel).Doc(channelID), []firestore.Update{
+		{Path: "updated_at", Value: now},
+		{Path: "last_message_sent_at", Value: now},
+	})
 
 	if _, err := batch.Commit(r.Context()); err != nil {
 		logger.Error("failed to create message", zap.Error(err))
