@@ -57,6 +57,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit, messages
 							id="screenname"
 							type="text"
 							className="input"
+							minLength={6}
 							required={true}
 							autoFocus={true}
 							value={screenname}
@@ -74,7 +75,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit, messages
 							id="password"
 							type="password"
 							className="input"
-							minLength={8}
+							minLength={6}
 							required={true}
 							value={password}
 							onChange={e => setPassword(e.target.value)}
@@ -94,7 +95,7 @@ export default function AuthWindow({ title, swapText, swapLink, submit, messages
 						<button
 							type="submit"
 							className="button py-0.5 px-1 text-sm"
-							disabled={screenname === '' || password.length < 8}
+							disabled={screenname === '' || password.length < 6}
 						>
 							{title}
 						</button>
