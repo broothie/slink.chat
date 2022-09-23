@@ -24,6 +24,10 @@ export default function Chat({ channelID, close, addChannel }: {
 
 	const [message, setMessage] = useState('')
 
+	const socket = useSocket('Chat', `api/v1/channels/${channelID}/messages/subscribe`, (message: Message) => {
+		addMessage(message)
+	})
+
 	function onTextareaKeyDown(event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault()
@@ -32,8 +36,8 @@ export default function Chat({ channelID, close, addChannel }: {
 	}
 
 	function sendMessage() {
-		axios.post(`/api/v1/channels/${channelID}/messages`, {body: message})
-			.then(() => setMessage(''))
+		socket.send(JSON.stringify({ body: message }))
+		setMessage('')
 	}
 
 	function addMessage(message: Message) {
@@ -58,10 +62,6 @@ export default function Chat({ channelID, close, addChannel }: {
 			window?.scrollTo(0, window?.scrollHeight)
 		}
 	}, [messages])
-
-	useSocket('Chat', `api/v1/channels/${channelID}/messages/subscribe`, (message: Message) => {
-		addMessage(message)
-	})
 
 	return channel && (
 		<div className="window p-1 flex flex-col w-fit">

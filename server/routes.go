@@ -55,7 +55,7 @@ func (s *Server) routes() chi.Router {
 				r.Get("/", s.indexChannels)
 				r.Post("/", s.createChannel)
 				r.Get("/search", s.searchChannels)
-				
+
 				r.Route("/chats", func(r chi.Router) {
 					r.Post("/", s.upsertChat)
 					r.Get("/messages", s.channelsSocket)
@@ -71,7 +71,6 @@ func (s *Server) routes() chi.Router {
 
 					r.Route("/messages", func(r chi.Router) {
 						r.Get("/", s.indexMessages)
-						r.Post("/", s.createMessage)
 						r.Get("/subscribe", s.channelSocket)
 					})
 				})

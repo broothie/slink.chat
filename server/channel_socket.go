@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -56,11 +57,45 @@ func (s *Server) channelSocket(w http.ResponseWriter, r *http.Request) {
 		defer close(socketCloseChan)
 
 		for {
-			if _, _, err := conn.NextReader(); err != nil {
+			messageType, socketReader, err := conn.NextReader()
+			if err != nil {
 				if _, isCloseErr := err.(*websocket.CloseError); !isCloseErr {
 					logger.Error("next reader error", zap.Error(err))
 				}
 
+				return
+			}
+
+			if messageType != websocket.TextMessage {
+				logger.Info("reader received non-text message type", zap.Int("message_type", messageType))
+				continue
+			}
+
+			var params model.Message
+			if err := json.NewDecoder(socketReader).Decode(&params); err != nil {
+				logger.Error("failed to decode message", zap.Error(err))
+				continue
+			}
+
+			now := time.Now()
+			message := model.Message{
+				ID:        xid.New().String(),
+				CreatedAt: now,
+				UpdatedAt: now,
+				UserID:    user.ID,
+				ChannelID: channelID,
+				Body:      params.Body,
+			}
+
+			batch := s.DB.Batch()
+			batch.Create(s.DB.CollectionFor(message.Type()).Doc(message.ID), message)
+			batch.Update(s.DB.CollectionFor(model.TypeChannel).Doc(channelID), []firestore.Update{
+				{Path: "updated_at", Value: now},
+				{Path: "last_message_sent_at", Value: now},
+			})
+
+			if _, err := batch.Commit(r.Context()); err != nil {
+				logger.Error("failed to create message", zap.Error(err))
 				return
 			}
 		}
