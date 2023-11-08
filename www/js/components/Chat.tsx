@@ -4,12 +4,12 @@ import * as _ from "lodash";
 import {useAppDispatch, useAppSelector} from "../hooks";
 import {Message} from "../model/model";
 import {fetchUser} from "../store/usersSlice";
-import axios from "../axios";
 import TitleBar from "./TitleBar";
 import {playMessageReceive, playMessageSend} from "../audio";
 import {createChat, fetchChannel, fetchChannelUsers} from "../store/channelsSlice";
 import {fetchMessages, receiveMessage} from "../store/messagesSlice";
 import useSocket from "../useSocket";
+import {DateTime} from "luxon";
 
 export default function Chat({ channelID, close, addChannel }: {
 	channelID: string,
@@ -132,7 +132,7 @@ function MessageItem({ message, addChannel }: {
 	}
 
 	return messageUser && (
-		<p>
+		<p title={DateTime.fromISO(message.createdAt).toLocaleString(DateTime.DATETIME_FULL)}>
 			{message.userID === currentUser.userID ? (
 				<span className="text-indigo-700">{messageUser.screenname}:</span>
 			) : (

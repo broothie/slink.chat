@@ -7,3 +7,5 @@ static/index.js*
 static/style.css
 yarn-error.log
 main
+.yarn
+.pnp.*
