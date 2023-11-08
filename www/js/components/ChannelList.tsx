@@ -66,7 +66,7 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 
 				<div className="hr my-0.5"/>
 
-				<div className="bg-white inset px-2 py-1 text-sm flex-grow">
+				<div className="bg-white inset px-2 py-1 text-sm flex-grow h-0 overflow-y-scroll">
 					<div>
 						<div className="p-1 border-b border-black flex flex-row justify-between">
 							<p>Chats</p>
