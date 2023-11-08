@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 6
   cacheKey: 10c0
 
 "@babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.9.2":
@@ -704,9 +704,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@npm%3A~2.3.2#optional!builtin<compat/fsevents>":
+"fsevents@patch:fsevents@npm%3A~2.3.2#~builtin<compat/fsevents>":
   version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
   dependencies:
     node-gyp: "npm:latest"
   conditions: os=darwin
@@ -1186,6 +1186,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^3.3.6":
+  version: 3.3.7
+  resolution: "nanoid@npm:3.3.7"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 8/d36c427e530713e4ac6567d488b489a36582ef89da1d6d4e3b87eded11eb10d7042a877958c6f104929809b2ab0bafa17652b076cdf84324aa75b30b722204f2
+  languageName: node
+  linkType: hard
+
 "negotiator@npm:^0.6.3":
   version: 0.6.3
   resolution: "negotiator@npm:0.6.3"
@@ -1376,7 +1385,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.14, postcss@npm:^8.4.16":
+"postcss@npm:^8.4.14":
   version: 8.4.16
   resolution: "postcss@npm:8.4.16"
   dependencies:
@@ -1384,6 +1393,17 @@ __metadata:
     picocolors: "npm:^1.0.0"
     source-map-js: "npm:^1.0.2"
   checksum: 971e10b5492ffce3d30e39ffba1b4f135d0c751bf774493babe4cb89ddb4995aabb2ce290f48bbf1d9ae60016a6ad492535e614b22b15322f977c7744e800fa2
+  languageName: node
+  linkType: hard
+
+"postcss@npm:^8.4.31":
+  version: 8.4.31
+  resolution: "postcss@npm:8.4.31"
+  dependencies:
+    nanoid: ^3.3.6
+    picocolors: ^1.0.0
+    source-map-js: ^1.0.2
+  checksum: 8/1d8611341b073143ad90486fcdfeab49edd243377b1f51834dc4f6d028e82ce5190e4f11bb2633276864503654fb7cab28e67abdc0fbf9d1f88cad4a0ff0beea
   languageName: node
   linkType: hard
 
@@ -1581,16 +1601,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@npm%3A^1.1.7#optional!builtin<compat/resolve>, resolve@patch:resolve@npm%3A^1.22.1#optional!builtin<compat/resolve>":
+"resolve@patch:resolve@npm%3A^1.1.7#~builtin<compat/resolve>, resolve@patch:resolve@npm%3A^1.22.1#~builtin<compat/resolve>":
   version: 1.22.1
-  resolution: "resolve@patch:resolve@npm%3A1.22.1#optional!builtin<compat/resolve>::version=1.22.1&hash=c3c19d"
+  resolution: "resolve@patch:resolve@npm%3A1.22.1#~builtin<compat/resolve>::version=1.22.1&hash=c3c19d"
   dependencies:
     is-core-module: "npm:^2.9.0"
     path-parse: "npm:^1.0.7"
     supports-preserve-symlinks-flag: "npm:^1.0.0"
   bin:
     resolve: bin/resolve
-  checksum: 0d8ccceba5537769c42aa75e4aa75ae854aac866a11d7e9ffdb1663f0158ee646a0d48fc2818ed5e7fb364d64220a1fb9092a160e11e00cbdd5fbab39a13092c
+  checksum: 8/5656f4d0bedcf8eb52685c1abdf8fbe73a1603bb1160a24d716e27a57f6cecbe2432ff9c89c2bd57542c3a7b9d14b1882b73bfe2e9d7849c9a4c0b8b39f02b8b
   languageName: node
   linkType: hard
 
@@ -1671,23 +1691,23 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "slink.chat@workspace:."
   dependencies:
-    "@reduxjs/toolkit": "npm:^1.8.4"
-    "@tailwindcss/aspect-ratio": "npm:^0.4.0"
-    "@tailwindcss/typography": "npm:^0.5.4"
-    "@types/luxon": "npm:^3.3.4"
-    autoprefixer: "npm:^10.4.8"
-    axios: "npm:^0.27.2"
-    classnames: "npm:^2.3.1"
-    lodash: "npm:^4.17.21"
-    luxon: "npm:^3.4.3"
-    postcss: "npm:^8.4.16"
-    react: "npm:^18.2.0"
-    react-dom: "npm:^18.2.0"
-    react-redux: "npm:^8.0.2"
-    react-router-dom: "npm:^6.3.0"
-    redux: "npm:^4.2.0"
-    redux-logger: "npm:^3.0.6"
-    tailwindcss: "npm:^3.1.8"
+    "@reduxjs/toolkit": ^1.8.4
+    "@tailwindcss/aspect-ratio": ^0.4.0
+    "@tailwindcss/typography": ^0.5.4
+    "@types/luxon": ^3.3.4
+    autoprefixer: ^10.4.8
+    axios: ^0.27.2
+    classnames: ^2.3.1
+    lodash: ^4.17.21
+    luxon: ^3.4.3
+    postcss: ^8.4.31
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    react-redux: ^8.0.2
+    react-router-dom: ^6.3.0
+    redux: ^4.2.0
+    redux-logger: ^3.0.6
+    tailwindcss: ^3.1.8
   languageName: unknown
   linkType: soft
 
