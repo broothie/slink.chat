@@ -1,10 +1,11 @@
 import * as React from 'react'
 import TitleBar from './TitleBar'
-import { useState, useEffect } from "react";
+import {useState, useEffect, useRef} from "react";
 import { Channel } from '../model/model';
 import axios from '../axios';
 import { useAppDispatch } from "../hooks";
 import { fetchChannels } from '../store/channelsSlice';
+import * as _ from "lodash";
 
 export default function SearchChannels({ addChannel, close }: {
   addChannel: { (channelID: string) },
@@ -24,11 +25,15 @@ export default function SearchChannels({ addChannel, close }: {
       })
   }
 
-  useEffect(() => {
+  const search = useRef(_.throttle((query: string) => {
     axios.get(`/api/v1/channels/search?query=${query}`)
       .then(({ data }: { data: { channels: Channel[] } }) => {
         setChannels(data.channels)
       })
+  }, 500))
+
+  useEffect(() => {
+    search.current(query)
   }, [query])
 
   return (
