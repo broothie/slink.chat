@@ -1,6 +1,11 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/TwiN/go-away"
+)
 
 const TypeMessage Type = "message"
 
@@ -16,4 +21,15 @@ type Message struct {
 
 func (Message) Type() Type {
 	return TypeMessage
+}
+
+func (m Message) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"messageID": m.ID,
+		"createdAt": m.CreatedAt,
+		"updatedAt": m.UpdatedAt,
+		"userID":    m.UserID,
+		"channelID": m.ChannelID,
+		"body":      goaway.Censor(m.Body),
+	})
 }
