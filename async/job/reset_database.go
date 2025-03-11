@@ -7,13 +7,13 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
-type ResetDB struct{}
+type ResetDatabase struct{}
 
-func (j ResetDB) Name() string {
+func (j ResetDatabase) Name() string {
 	return typeName(j)
 }
 
-func (s *Server) ResetDB(ctx context.Context) error {
+func (s *Server) ResetDatabase(ctx context.Context) error {
 	logger := ctxzap.Extract(ctx)
 	logger.Info("deleting all messages")
 

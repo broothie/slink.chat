@@ -11,8 +11,8 @@ import (
 
 func (s *Server) dispatch(ctx context.Context, message async.Message) error {
 	switch message.Name {
-	case ResetDB{}.Name():
-		return s.ResetDB(ctx)
+	case ResetDatabase{}.Name():
+		return s.ResetDatabase(ctx)
 
 	case NewUserJob{}.Name():
 		var payload NewUserJob
