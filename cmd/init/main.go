@@ -44,7 +44,7 @@ func main() {
 		ID:         xid.New().String(),
 		CreatedAt:  now,
 		UpdatedAt:  now,
-		Screenname: "SmarterChild",
+		Screenname: model.SmarterChildScreenname,
 	}
 
 	if err := smarterChild.UpdatePassword(string(securecookie.GenerateRandomKey(32))); err != nil {

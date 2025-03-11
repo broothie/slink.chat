@@ -8,7 +8,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const TypeUser Type = "user"
+const (
+	TypeUser Type = "user"
+
+	SmarterChildScreenname = "SmarterChild"
+)
 
 var userContextKey struct{}
 

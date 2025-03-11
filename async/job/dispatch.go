@@ -11,6 +11,9 @@ import (
 
 func (s *Server) dispatch(ctx context.Context, message async.Message) error {
 	switch message.Name {
+	case ResetDB{}.Name():
+		return s.ResetDB(ctx)
+
 	case NewUserJob{}.Name():
 		var payload NewUserJob
 		if err := json.Unmarshal(message.Payload, &payload); err != nil {

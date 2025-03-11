@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/broothie/slink.chat/async/job"
 	"github.com/broothie/slink.chat/config"
@@ -21,8 +20,7 @@ func main() {
 
 	core, err := core.New(cfg)
 	if err != nil {
-		core.Logger.Error("failed to get new core", zap.Error(err))
-		os.Exit(1)
+		log.Fatalln("failed to get new core", err)
 	}
 
 	server := job.NewServer(core)

@@ -91,32 +91,6 @@ export default function ChannelList({ addChannel, openCreateChannel, openCreateC
 							))}
 						</div>
 					</div>
-
-					<div>
-						<div className="p-1 border-b border-black flex flex-row justify-between">
-							<p>Channels</p>
-
-							<div className="space-x-1">
-								<a className="link" onClick={openSearchChannels}>Search</a>
-								<a className="link" onClick={openCreateChannel}>Create</a>
-							</div>
-						</div>
-
-						<div>
-							{_.map(publicChannels, channel => (
-								<div
-									key={channel.channelID}
-									className="pl-3 pr-0.5 py-0.5 cursor-pointer"
-									onDoubleClick={() => addChannel(channel.channelID)}
-								>
-									<div className="hover:bg-logo-tile hover:text-white p-0.5 select-none flex flex-row justify-between">
-										<p>{channel.name}</p>
-										<button className="button px-1 cursor-pointer" onClick={() => removeChannel(channel.channelID)}>-</button>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>
