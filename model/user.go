@@ -11,7 +11,7 @@ import (
 const (
 	TypeUser Type = "user"
 
-	SmarterChildScreenname = "SmarterChild"
+	ScreennameSmarterChild = "SmarterChild"
 )
 
 var userContextKey struct{}

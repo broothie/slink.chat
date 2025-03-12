@@ -44,7 +44,7 @@ func main() {
 		ID:         xid.New().String(),
 		CreatedAt:  now,
 		UpdatedAt:  now,
-		Screenname: model.SmarterChildScreenname,
+		Screenname: model.ScreennameSmarterChild,
 	}
 
 	if err := smarterChild.UpdatePassword(string(securecookie.GenerateRandomKey(32))); err != nil {
@@ -59,7 +59,7 @@ func main() {
 		UpdatedAt: now,
 		UserID:    smarterChild.ID,
 		UserIDs:   []string{smarterChild.ID},
-		Name:      model.WorldChatName,
+		Name:      model.ChannelNameWorldChat,
 	}
 
 	batch := db.Batch()

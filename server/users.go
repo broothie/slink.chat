@@ -164,7 +164,7 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) joinWorldChat(ctx context.Context, userID string) error {
 	worldChat, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(ctx, func(query firestore.Query) firestore.Query {
-		return query.Where("name", "==", model.WorldChatName).OrderBy("created_at", firestore.Asc)
+		return query.Where("name", "==", model.ChannelNameWorldChat).OrderBy("created_at", firestore.Asc)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get world chat")

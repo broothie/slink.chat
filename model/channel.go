@@ -3,8 +3,9 @@ package model
 import "time"
 
 const (
-	TypeChannel   Type = "channel"
-	WorldChatName      = "World Chat"
+	TypeChannel Type = "channel"
+
+	ChannelNameWorldChat = "World Chat"
 )
 
 type Channel struct {
