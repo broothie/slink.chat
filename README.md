@@ -5,7 +5,7 @@
 [Slink](http://www.slink.chat/) started as a simple attempt at cloning the much-beloved team collaboration tool [Slack](https://slack.com/), and quickly became an amalgamation of Slack and primordial AOL Instant Messenger.
 
 It was [originally written in Rails](https://github.com/broothie/slink) and hosted on Heroku as my capstone project for [App Academy](https://www.appacademy.io/).
-This repo is a rewrite in Go, hosted on GCP.
+This repo is a rewrite in Go and Typescript, hosted on GCP.
 
 ## Attributions
 
