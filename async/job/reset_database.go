@@ -5,6 +5,8 @@ import (
 
 	"github.com/broothie/slink.chat/model"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/pkg/errors"
+	"google.golang.org/api/iterator"
 )
 
 type ResetDatabase struct{}
@@ -28,17 +30,20 @@ func (s *Server) ResetDatabase(ctx context.Context) error {
 
 func (s *Server) deleteUsers(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all users")
-	docs, err := s.DB.CollectionFor(model.TypeUser).
+	docs := s.DB.CollectionFor(model.TypeUser).
 		Where("screenname", "!=", model.ScreennameSmarterChild).
-		Documents(ctx).
-		GetAll()
-	if err != nil {
-		return err
-	}
+		Documents(ctx)
 
-	for _, doc := range docs {
+	for {
+		doc, err := docs.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "iterating over message docs")
+		}
+
 		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return err
+			return errors.Wrap(err, "deleting message doc")
 		}
 	}
 
@@ -47,17 +52,20 @@ func (s *Server) deleteUsers(ctx context.Context) error {
 
 func (s *Server) deleteChannels(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all channels")
-	docs, err := s.DB.CollectionFor(model.TypeChannel).
+	docs := s.DB.CollectionFor(model.TypeChannel).
 		Where("name", "!=", model.ChannelNameWorldChat).
-		Documents(ctx).
-		GetAll()
-	if err != nil {
-		return err
-	}
+		Documents(ctx)
 
-	for _, doc := range docs {
+	for {
+		doc, err := docs.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "iterating over channel docs")
+		}
+
 		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return err
+			return errors.Wrap(err, "deleting channel doc")
 		}
 	}
 
@@ -66,14 +74,18 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 
 func (s *Server) deleteMessages(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all messages")
-	refs, err := s.DB.CollectionFor(model.TypeMessage).DocumentRefs(ctx).GetAll()
-	if err != nil {
-		return err
-	}
+	refs := s.DB.CollectionFor(model.TypeMessage).DocumentRefs(ctx)
 
-	for _, ref := range refs {
+	for {
+		ref, err := refs.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "iterating over message refs")
+		}
+
 		if _, err := ref.Delete(ctx); err != nil {
-			return err
+			return errors.Wrap(err, "deleting message ref")
 		}
 	}
 
