@@ -47,6 +47,11 @@ func (a *Algolia) SearchUsers(query string) ([]model.User, error) {
 	return users, nil
 }
 
+func (a *Algolia) DeleteUser(userID string) error {
+	_, err := a.usersIndex().DeleteObject(userID)
+	return errors.Wrap(err, "deleting user")
+}
+
 func (a *Algolia) IndexChannel(channel model.Channel) error {
 	if _, err := a.channelsIndex().SaveObject(util.Map{"objectID": channel.ID, "name": channel.Name}); err != nil {
 		return errors.Wrap(err, "failed to fetch channels")
@@ -69,6 +74,11 @@ func (a *Algolia) SearchChannels(query string) ([]model.Channel, error) {
 	})
 
 	return channels, nil
+}
+
+func (a *Algolia) DeleteChannel(channelID string) error {
+	_, err := a.channelsIndex().DeleteObject(channelID)
+	return errors.Wrap(err, "deleting channel")
 }
 
 func (a *Algolia) usersIndex() *search.Index {

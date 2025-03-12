@@ -33,6 +33,11 @@ func (db *DB) SearchUsers(query string) ([]model.User, error) {
 	return lo.Filter(users, func(user model.User, _ int) bool { return strings.HasPrefix(strings.ToLower(user.Screenname), query) }), nil
 }
 
+func (db *DB) DeleteUser(userID string) error {
+	_, err := db.db.Doc(userID).Delete(context.Background())
+	return errors.Wrap(err, "deleting user from db")
+}
+
 func (db *DB) IndexChannel(user model.Channel) error {
 	return nil
 }
@@ -47,4 +52,9 @@ func (db *DB) SearchChannels(query string) ([]model.Channel, error) {
 	return lo.Filter(channels, func(channel model.Channel, _ int) bool {
 		return strings.HasPrefix(strings.ToLower(channel.Name), query)
 	}), nil
+}
+
+func (db *DB) DeleteChannel(channelID string) error {
+	_, err := db.db.Doc(channelID).Delete(context.Background())
+	return errors.Wrap(err, "deleting channel from db")
 }

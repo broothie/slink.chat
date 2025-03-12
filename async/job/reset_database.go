@@ -7,6 +7,7 @@ import (
 	"github.com/broothie/slink.chat/model"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 )
 
@@ -35,6 +36,7 @@ func (s *Server) deleteMessages(ctx context.Context) error {
 		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
+	group, ctx := errgroup.WithContext(ctx)
 	for {
 		doc, err := docs.Next()
 		if errors.Is(err, iterator.Done) {
@@ -43,12 +45,16 @@ func (s *Server) deleteMessages(ctx context.Context) error {
 			return errors.Wrap(err, "iterating over message refs")
 		}
 
-		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return errors.Wrap(err, "deleting message ref")
-		}
+		group.Go(func() error {
+			if _, err := doc.Ref.Delete(ctx); err != nil {
+				return errors.Wrap(err, "deleting message ref")
+			}
+
+			return nil
+		})
 	}
 
-	return nil
+	return group.Wait()
 }
 
 func (s *Server) deleteChannels(ctx context.Context) error {
@@ -58,6 +64,7 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
+	group, ctx := errgroup.WithContext(ctx)
 	for {
 		doc, err := docs.Next()
 		if errors.Is(err, iterator.Done) {
@@ -66,12 +73,20 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 			return errors.Wrap(err, "iterating over channel docs")
 		}
 
-		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return errors.Wrap(err, "deleting channel doc")
-		}
+		group.Go(func() error {
+			if err := s.Search.DeleteChannel(doc.Ref.ID); err != nil {
+				return errors.Wrap(err, "un-indexing channel")
+			}
+
+			if _, err := doc.Ref.Delete(ctx); err != nil {
+				return errors.Wrap(err, "deleting channel doc")
+			}
+
+			return nil
+		})
 	}
 
-	return nil
+	return group.Wait()
 }
 
 func (s *Server) deleteUsers(ctx context.Context) error {
@@ -81,6 +96,7 @@ func (s *Server) deleteUsers(ctx context.Context) error {
 		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
+	group, ctx := errgroup.WithContext(ctx)
 	for {
 		doc, err := docs.Next()
 		if errors.Is(err, iterator.Done) {
@@ -89,10 +105,18 @@ func (s *Server) deleteUsers(ctx context.Context) error {
 			return errors.Wrap(err, "iterating over message docs")
 		}
 
-		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return errors.Wrap(err, "deleting message doc")
-		}
+		group.Go(func() error {
+			if err := s.Search.DeleteUser(doc.Ref.ID); err != nil {
+				return errors.Wrap(err, "un-indexing user")
+			}
+
+			if _, err := doc.Ref.Delete(ctx); err != nil {
+				return errors.Wrap(err, "deleting message doc")
+			}
+
+			return nil
+		})
 	}
 
-	return nil
+	return group.Wait()
 }
