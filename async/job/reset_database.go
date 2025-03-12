@@ -29,10 +29,9 @@ func (s *Server) ResetDatabase(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) deleteUsers(ctx context.Context) error {
-	ctxzap.Info(ctx, "deleting all users")
-	docs := s.DB.CollectionFor(model.TypeUser).
-		Where("screenname", "!=", model.ScreennameSmarterChild).
+func (s *Server) deleteMessages(ctx context.Context) error {
+	ctxzap.Info(ctx, "deleting all messages")
+	docs := s.DB.CollectionFor(model.TypeMessage).
 		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
@@ -41,11 +40,11 @@ func (s *Server) deleteUsers(ctx context.Context) error {
 		if errors.Is(err, iterator.Done) {
 			break
 		} else if err != nil {
-			return errors.Wrap(err, "iterating over message docs")
+			return errors.Wrap(err, "iterating over message refs")
 		}
 
 		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return errors.Wrap(err, "deleting message doc")
+			return errors.Wrap(err, "deleting message ref")
 		}
 	}
 
@@ -75,9 +74,10 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) deleteMessages(ctx context.Context) error {
-	ctxzap.Info(ctx, "deleting all messages")
-	docs := s.DB.CollectionFor(model.TypeMessage).
+func (s *Server) deleteUsers(ctx context.Context) error {
+	ctxzap.Info(ctx, "deleting all users")
+	docs := s.DB.CollectionFor(model.TypeUser).
+		Where("screenname", "!=", model.ScreennameSmarterChild).
 		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
@@ -86,11 +86,11 @@ func (s *Server) deleteMessages(ctx context.Context) error {
 		if errors.Is(err, iterator.Done) {
 			break
 		} else if err != nil {
-			return errors.Wrap(err, "iterating over message refs")
+			return errors.Wrap(err, "iterating over message docs")
 		}
 
 		if _, err := doc.Ref.Delete(ctx); err != nil {
-			return errors.Wrap(err, "deleting message ref")
+			return errors.Wrap(err, "deleting message doc")
 		}
 	}
 
