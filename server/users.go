@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"sort"
@@ -160,20 +159,4 @@ func (s *Server) searchUsers(w http.ResponseWriter, r *http.Request) {
 	users = lo.Reject(users, func(u model.User, _ int) bool { return u.ID == user.ID })
 	sort.Slice(users, func(i, j int) bool { return users[i].ID < users[j].ID })
 	s.render.JSON(w, http.StatusOK, util.Map{"users": users})
-}
-
-func (s *Server) joinWorldChat(ctx context.Context, userID string) error {
-	worldChat, err := db.NewFetcher[model.Channel](s.DB).FetchFirst(ctx, func(query firestore.Query) firestore.Query {
-		return query.Where("name", "==", model.ChannelNameWorldChat).OrderBy("created_at", firestore.Asc)
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to get world chat")
-	}
-
-	updates := []firestore.Update{{Path: "user_ids", Value: firestore.ArrayUnion(userID)}}
-	if _, err = s.DB.CollectionFor(worldChat.Type()).Doc(worldChat.ID).Update(ctx, updates); err != nil {
-		return errors.Wrap(err, "failed to create world chat subscription")
-	}
-
-	return nil
 }
