@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"time"
 
 	"github.com/broothie/slink.chat/model"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
@@ -32,6 +33,7 @@ func (s *Server) deleteUsers(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all users")
 	docs := s.DB.CollectionFor(model.TypeUser).
 		Where("screenname", "!=", model.ScreennameSmarterChild).
+		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
 	for {
@@ -54,6 +56,7 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all channels")
 	docs := s.DB.CollectionFor(model.TypeChannel).
 		Where("name", "!=", model.ChannelNameWorldChat).
+		Where("created_at", "<", time.Now().Add(-time.Hour)).
 		Documents(ctx)
 
 	for {
@@ -74,17 +77,19 @@ func (s *Server) deleteChannels(ctx context.Context) error {
 
 func (s *Server) deleteMessages(ctx context.Context) error {
 	ctxzap.Info(ctx, "deleting all messages")
-	refs := s.DB.CollectionFor(model.TypeMessage).DocumentRefs(ctx)
+	docs := s.DB.CollectionFor(model.TypeMessage).
+		Where("created_at", "<", time.Now().Add(-time.Hour)).
+		Documents(ctx)
 
 	for {
-		ref, err := refs.Next()
+		doc, err := docs.Next()
 		if errors.Is(err, iterator.Done) {
 			break
 		} else if err != nil {
 			return errors.Wrap(err, "iterating over message refs")
 		}
 
-		if _, err := ref.Delete(ctx); err != nil {
+		if _, err := doc.Ref.Delete(ctx); err != nil {
 			return errors.Wrap(err, "deleting message ref")
 		}
 	}
